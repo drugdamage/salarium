@@ -1,0 +1,71 @@
+{
+  "name": "salarium",
+  "version": "2.0.0",
+  "description": "Desktop app for logging work hours and calculating salary: monthly goal, two payouts a month, schedule planner. Data in your own Supabase.",
+  "keywords": [
+    "electron",
+    "desktop-app",
+    "salary-calculator",
+    "time-tracking",
+    "work-hours",
+    "timesheet",
+    "payroll",
+    "supabase"
+  ],
+  "author": "drugdamage (https://github.com/drugdamage)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drugdamage/salarium.git"
+  },
+  "homepage": "https://github.com/drugdamage/salarium#readme",
+  "bugs": {
+    "url": "https://github.com/drugdamage/salarium/issues"
+  },
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac",
+    "build:win": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^29.4.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.personal.salarium",
+    "productName": "Salarium",
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "icon": "assets/icon.icns",
+      "target": {
+        "target": "dir",
+        "arch": [
+          "arm64"
+        ]
+      }
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": {
+        "target": "dir",
+        "arch": [
+          "x64"
+        ]
+      }
+    },
+    "files": [
+      "**/*",
+      "!node_modules",
+      "!dist",
+      "!screenshots",
+      "!*.bat",
+      "!*.command",
+      "!README.md",
+      "!config.example.js",
+      "!.gitignore"
+    ]
+  }
+}
