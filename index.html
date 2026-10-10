@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Salarium</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg:#151517;
+  --rail-bg:#1c1c1e;
+  --rail-active-bg:rgba(10,132,255,0.18);
+  --card:#1e1e21;
+  --surface:#1e1e21;
+  --surface2:#2c2c2e;
+  --text:#f5f5f7;
+  --text2:#98989d;
+  --text3:#6e6e73;
+  --accent:#0a84ff;
+  --accent-hover:#3d9bff;
+  --red:#ff453a;
+  --green:#30d158;
+  --amber:#ff9f0a;
+  --purple:#bf5af2;
+  --border:rgba(255,255,255,0.09);
+  --shadow:0 2px 20px rgba(0,0,0,0.4);
+  --r-card:18px; --r:10px; --r-sm:8px;
+}
+
+html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;color:var(--text);}
+*{scrollbar-width:thin;scrollbar-color:var(--surface2) transparent;}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:5px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text3);}
+body{overflow:hidden;}
+
+.app-shell{display:flex;height:100vh;width:100vw;background:var(--bg);}
+.rail{width:68px;flex-shrink:0;background:var(--rail-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:3px;overflow-y:auto;}
+.rail-btn{width:54px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0 7px;border-radius:12px;background:none;border:none;cursor:pointer;color:var(--text3);transition:background .12s,color .12s;font-family:inherit;flex-shrink:0;}
+.rail-btn svg{width:20px;height:20px;}
+.rail-btn span{font-size:8.5px;font-weight:500;letter-spacing:.1px;text-align:center;line-height:1.15;}
+.rail-btn.active{background:var(--rail-active-bg);color:var(--accent);}
+.rail-spacer{flex:1;}
+
+.main{flex:1;display:flex;flex-direction:column;min-width:0;}
+.topbar{padding:24px 24px 4px;font-size:26px;font-weight:700;letter-spacing:-0.4px;color:var(--text);flex-shrink:0;}
+.content{flex:1;overflow-y:auto;padding:14px 24px 50px;}
+.content-inner{max-width:480px;margin:0 auto;}
+
+.month-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.month-title{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.1px;user-select:none;}
+.nav-btn{background:none;border:none;cursor:pointer;color:var(--accent);font-size:20px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .1s;line-height:1;}
+.nav-btn:hover{background:var(--surface2);}
+.edit-link{display:block;text-align:center;background:none;border:none;cursor:pointer;color:var(--text2);font-size:12.5px;font-weight:500;font-family:inherit;padding:8px 0 2px;width:100%;letter-spacing:0.1px;transition:color .12s;}
+.edit-link:hover{color:var(--accent);}
+.edit-link.active{color:var(--accent);}
+
+.day-labels{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+.day-label{text-align:center;font-size:10.5px;font-weight:500;color:var(--text2);letter-spacing:0.3px;padding-bottom:6px;user-select:none;}
+.day-label.sun{color:var(--red);}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--r);cursor:pointer;border:1.5px solid transparent;transition:background .1s;user-select:none;}
+.cell:not(.empty):hover{background:var(--surface2);}
+.cell.empty{cursor:default;pointer-events:none;}
+.cell.today{background:var(--accent);}
+.cell.today:hover{background:var(--accent-hover);}
+.cell.selected:not(.today){border-color:var(--accent);background:rgba(10,132,255,0.18);}
+.day-num{font-size:13px;font-weight:400;color:var(--text);line-height:1;}
+.cell.today .day-num{color:#fff;font-weight:600;}
+.cell.sun .day-num{color:var(--red);}
+.cell.today.sun .day-num{color:#fff;}
+.dot{width:4px;height:4px;border-radius:50%;background:var(--accent);margin-top:3px;}
+.cell.today .dot{background:rgba(255,255,255,0.8);}
+.cell.day-off-marked{box-shadow:inset 0 0 0 1.5px var(--red);}
+.cell.shortened-marked{box-shadow:inset 0 0 0 1.5px var(--amber);}
+.cell.overtime-marked{box-shadow:inset 0 0 0 1.5px var(--purple);}
+.cell.suggested-day{background:rgba(10,132,255,0.10);border:1.5px dashed var(--accent);}
+.cell.today.suggested-day{background:var(--accent);border-color:transparent;}
+.routine-cal.compact .cell{aspect-ratio:auto;height:26px;border-radius:6px;}
+.routine-cal.compact .day-num{font-size:11px;}
+.routine-cal.compact .day-label{font-size:9px;padding-bottom:3px;}
+.routine-cal.compact .dot{width:3px;height:3px;margin-top:1px;}
+
+.entry-panel{margin-top:14px;background:var(--surface2);border-radius:14px;border:1px solid var(--border);padding:14px 16px;animation:slideIn .15s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.entry-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.entry-date{font-size:14px;font-weight:600;color:var(--text);}
+.icon-btn{background:none;border:none;cursor:pointer;padding:0;line-height:1;opacity:.8;transition:opacity .1s;color:var(--text2);font-family:inherit;}
+.icon-btn:hover{opacity:1;}
+.icon-btn.red{color:var(--red);font-size:20px;}
+
+.time-input{width:100%;font-size:24px;font-weight:300;letter-spacing:5px;text-align:center;border:none;border-bottom:1.5px solid var(--border);outline:none;padding:4px 0 8px;color:var(--text);background:transparent;font-family:inherit;transition:border-color .15s;}
+.time-input::placeholder{color:var(--text3);letter-spacing:3px;}
+.time-input:focus{border-bottom-color:var(--accent);}
+.entry-error{font-size:12px;color:var(--red);text-align:center;margin-top:6px;min-height:16px;}
+.entry-btns{display:flex;gap:8px;margin-top:14px;}
+.btn{flex:1;padding:10px 0;border-radius:var(--r);border:none;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .1s;}
+.btn-cancel{background:var(--surface2);color:var(--text);}
+.btn-cancel:hover{background:#3a3a3c;}
+.btn-save{background:var(--accent);color:#fff;font-weight:600;}
+.btn-save:hover{background:var(--accent-hover);}
+
+.divider{height:1px;background:var(--border);margin:16px 0;}
+
+.period-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:16px;}
+.period-row{display:flex;justify-content:space-between;align-items:flex-start;}
+.period-label{font-size:11px;color:var(--text2);font-weight:500;letter-spacing:0.2px;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.period-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;display:inline-block;}
+.period-amount{font-size:21px;font-weight:600;color:var(--text);letter-spacing:-0.5px;}
+.period-amount.zero{color:var(--text3);}
+.period-meta{font-size:11px;color:var(--text2);margin-top:2px;}
+.pay-badge{background:var(--surface2);border-radius:var(--r-sm);padding:4px 8px;text-align:center;flex-shrink:0;margin-left:10px;}
+.pay-badge.urgent{background:rgba(255,159,10,0.16);}
+.pay-badge-label{font-size:10px;color:var(--text2);}
+.pay-badge.urgent .pay-badge-label{color:var(--amber);}
+.pay-badge-value{font-size:12px;font-weight:600;color:var(--text);}
+.pay-badge.urgent .pay-badge-value{color:var(--amber);}
+
+.total-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.total-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.6px;}
+.total-meta{font-size:11px;color:var(--text2);margin-top:2px;}
+.total-amount{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.6px;text-align:right;}
+
+.setting-row{display:flex;gap:10px;margin-bottom:10px;}
+.setting-input{flex:1;min-width:0;background:var(--surface2);border:none;border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;}
+.setting-input::placeholder{color:var(--text3);}
+.setting-input:disabled{opacity:.55;}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
+
+.group-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin:18px 4px 7px;}
+.group-label:first-of-type{margin-top:0;}
+.group-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;padding:0 14px;}
+
+.add-note-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px 0;border-radius:var(--r);border:1.5px dashed var(--border);background:none;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:14px;transition:background .1s;}
+.add-note-btn:hover{background:var(--surface);}
+.empty-state{text-align:center;color:var(--text3);font-size:13px;padding:40px 0;}
+
+.pill-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
+.pill{min-width:0;text-align:center;padding:8px 2px;border-radius:9px;background:var(--surface2);border:1.5px solid transparent;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .1s,color .1s;white-space:normal;line-height:1.2;}
+.pill.active{background:rgba(10,132,255,0.18);color:var(--accent);border-color:var(--accent);}
+.legend-dash{display:inline-block;width:10px;height:10px;border-radius:3px;border:1.5px dashed var(--accent);background:rgba(10,132,255,0.10);vertical-align:-1px;margin-right:5px;}
+
+.work-layout{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+.work-main{flex:1 1 320px;min-width:280px;}
+.work-side{flex:1 1 250px;min-width:230px;max-width:300px;}
+.suggest-cal .cell{cursor:default;}
+
+.lang-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.lang-btn{padding:12px 0;border-radius:var(--r);background:var(--surface2);border:1.5px solid transparent;color:var(--text2);font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .12s,color .12s;}
+.lang-btn.active{background:rgba(10,132,255,0.18);color:var(--accent);border-color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="rail" id="rail"></div>
+  <div class="main">
+    <div class="topbar" id="topbar"></div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+/* Supabase credentials live in config.js (gitignored) — see config.example.js */
+const CFG = window.SALARIUM_CONFIG || {};
+const SUPABASE_URL = String(CFG.SUPABASE_URL || '').replace(/\/+$/, '');
+const SUPABASE_KEY = String(CFG.SUPABASE_KEY || '');
+const CONFIG_OK = /^https?:\/\/.+/.test(SUPABASE_URL) && SUPABASE_KEY.length > 0 &&
+  !/YOUR-/.test(SUPABASE_URL + SUPABASE_KEY);
+
+/* ══════════════ STORAGE ══════════════ */
+const NET_TIMEOUT = 12000;
+async function fetchTO(url, opts, ms){
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), ms||NET_TIMEOUT);
+  try { return await fetch(url, Object.assign({}, opts, {signal: ctrl.signal})); }
+  finally { clearTimeout(t); }
+}
+/* Strict read: throws on network failure. Returns null ONLY when the request
+   succeeded and the row genuinely does not exist. */
+async function sGetStrict(k){
+  let lastErr;
+  for (let attempt=0; attempt<3; attempt++){
+    try{
+      const res = await fetchTO(SUPABASE_URL+'/rest/v1/kv_store?key=eq.'+encodeURIComponent(k)+'&select=value', {
+        headers:{ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY }
+      });
+      if(!res.ok) throw new Error('HTTP '+res.status+' — '+k);
+      const arr = await res.json();
+      return (Array.isArray(arr) && arr[0]) ? arr[0].value : null;
+    } catch(e){
+      lastErr = e;
+      if (attempt<2) await new Promise(r=>setTimeout(r, 700*(attempt+1)));
+    }
+  }
+  throw lastErr || new Error('Read failed: '+k);
+}
+async function sGet(k){ try { return await sGetStrict(k); } catch(e){ return null; } }
+async function sSet(k,v){
+  try{
+    await fetchTO(SUPABASE_URL+'/rest/v1/kv_store?on_conflict=key', {
+      method:'POST',
+      headers:{ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json', Prefer:'resolution=merge-duplicates' },
+      body: JSON.stringify({ key:k, value:v })
+    });
+  } catch(e){}
+}
+
+/* ══════════════ I18N ══════════════ */
+const I18N = {
+  ru: {
+    nav_work:'Работа', nav_settings:'Настройки', nav_about:'О приложении',
+    loading:'Загрузка данных…',
+    err_title:'Данные не загружены',
+    err_body:'Не удалось полностью загрузить данные из базы.',
+    err_hint:'Чтобы не перезаписать существующие данные неполными, приложение остановило запуск. Проверь интернет и нажми «Повторить».',
+    err_retry:'Повторить',
+    cfg_title:'Нет настроек базы',
+    cfg_body:'Файл config.js не найден или в нём остались плейсхолдеры.',
+    cfg_hint:'Скопируйте config.example.js в config.js и впишите свои ключи Supabase (Project URL и publishable/anon key), затем перезапустите приложение.',
+    cfg_reload:'Перезагрузить',
+
+    goal_title:'Цель на месяц',
+    ph_shifts:'смен', ph_hours:'часов в смену', ph_rate:'ставка, ₽/час', ph_tax:'коэф. налога',
+    goal_line:'Цель {0} · отработано {1} · {2}',
+    goal_left:'осталось {0}', goal_over:'переработка {0}',
+    goal_empty:'Укажи смены и часы в смену, чтобы видеть остаток',
+    goal_net:'На руки за всю цель: {0}',
+
+    edit_month:'Редактировать этот месяц',
+    edit_done:'Готово · месяц разблокирован',
+
+    entry_delete:'Удалить',
+    entry_window:'обычное окно: {0}',
+    btn_holiday:'Праздник', btn_short:'Сокращённый день',
+    hint_holiday:'Праздник — день не входит в цель по часам и не предлагается в графике. Сокращённый день — вычитает из цели только указанные часы.',
+    ph_short:'На сколько часов меньше, например 1',
+    clear_mark:'Убрать пометку',
+    btn_overtime:'Доп. смена',
+    hint_overtime:'Доп. смена — этот день считается по своей ставке вместо обычной (например, переработка сверх цели на месяц) и идёт в доход.',
+    ph_otrate:'ставка, ₽/час, например 440',
+    clear_otrate:'Убрать свою ставку',
+    btn_cancel:'Отмена', btn_save:'Сохранить',
+    err_format:'Формат: ЧЧ:ММ:СС — например, 04:06:44',
+    err_minsec:'Минуты и секунды — не более 59',
+    tip_holiday:'Праздник', tip_overtime:'Доп. смена · {0} ₽/ч',
+
+    pay_label:'выплата',
+    pay_today:'сегодня', pay_tomorrow:'завтра', pay_in:'через {0} дн.',
+    no_data:'нет данных', before_tax:'до вычета {0}',
+    month_total:'За месяц',
+
+    sched_title:'Подбор графика', sched_flex:'Гибкий', sched_flex_low:'гибкий',
+    work_time:'Рабочее время', weekdays:'Будни', weekends:'Выходные',
+    sched_legend:'рекомендуемые рабочие дни по графику «{0}» на {1}. Праздничные дни не предлагаются, выходные по возможности — на сб/вс.',
+    sched_empty:'Укажи количество смен в цели слева, чтобы увидеть рекомендации.',
+    breaks_title:'Рекомендации по часам',
+    breaks_weekday:'Будни:', breaks_weekend:'Выходные:',
+    breaks_need_weekday:'укажи время будней выше', breaks_need_weekend:'укажи время выходных выше',
+    breaks_note:'Короткий перерыв 5 мин примерно каждый час + один перерыв 15 мин в середине смены — по рекомендациям OSHA/NIOSH для работы за компьютером и Duke Health для операторов колл-центра. Подстраивается под длину смены.',
+    work_w:'работа', break_w:'перерыв',
+
+    set_lang:'Язык', set_backup:'Резервная копия',
+    set_backup_note:'Сохраняет и восстанавливает все данные программы в обычный файл — независимо от Supabase.',
+    set_export:'Экспорт в файл', set_import:'Импорт из файла',
+
+    about_work_t:'Работа',
+    about_work_b:'Здесь вводится фактически отработанное время по дням — нажми на число в календаре. В «Цели на месяц» указываются количество смен, часов в смену, ставка и налоговый коэффициент — от них считаются обе выплаты (1–15 и 16–конец) и итог за месяц.<br><br>Кнопки «Праздник» и «Сокращённый день» в карточке дня помечают день как нерабочий или с уменьшенными часами. Праздник не меняет цель по часам — это просто пометка нерабочего дня (красная рамка) и он не предлагается в графике. Сокращённый день вычитает из цели ровно те часы, что указаны (янтарная рамка).<br><br>Кнопка «Доп. смена» помечает день своей ставкой (например, переработка, оплаченная иначе) — эта ставка идёт в доход вместо обычной для часов этого дня, день выделяется фиолетовой рамкой.<br><br>Справа — «Подбор графика»: выбери тип смен (5/2, 2/2, 7/0 или «Гибкий» — для удалённой/нерегулярной работы), и на маленьком календаре пунктиром отметятся рекомендуемые рабочие дни до выполнения цели, с выходными по возможности на сб/вс. Там же — рабочее время и рекомендации по перерывам.',
+    about_hist_t:'Прошлые месяцы',
+    about_hist_b:'Стрелками сверху можно листать месяцы. Прошедшие месяцы по умолчанию нередактируемы, чтобы случайно не испортить уже посчитанную зарплату. Кнопка «Редактировать этот месяц» под календарём временно снимает блокировку.',
+    about_set_t:'Настройки',
+    about_set_b:'Язык интерфейса — русский или английский, переключается мгновенно. Экспорт сохраняет все данные программы в один файл на компьютере — независимая резервная копия. Импорт восстанавливает данные из такого файла, например при переносе на другое устройство.',
+    about_data_t:'Где хранятся данные',
+    about_data_b:'Все данные хранятся в собственной базе на Supabase, а не у Anthropic — программа продолжит работать и без Claude. Файл резервной копии из «Настроек» — дополнительная защита на случай переноса данных.',
+
+    h_unit:'ч', m_unit:'мин'
+  },
+  en: {
+    nav_work:'Work', nav_settings:'Settings', nav_about:'About',
+    loading:'Loading data…',
+    err_title:'Data not loaded',
+    err_body:'The data could not be fully loaded from the database.',
+    err_hint:'To avoid overwriting existing data with an incomplete copy, startup was halted. Check your connection and press Retry.',
+    err_retry:'Retry',
+    cfg_title:'Database not configured',
+    cfg_body:'config.js is missing or still contains placeholders.',
+    cfg_hint:'Copy config.example.js to config.js and fill in your Supabase keys (Project URL and publishable/anon key), then restart the app.',
+    cfg_reload:'Reload',
+
+    goal_title:'Monthly goal',
+    ph_shifts:'shifts', ph_hours:'hours per shift', ph_rate:'rate, ₽/hour', ph_tax:'tax factor',
+    goal_line:'Goal {0} · worked {1} · {2}',
+    goal_left:'{0} left', goal_over:'{0} overtime',
+    goal_empty:'Enter shifts and hours per shift to see what is left',
+    goal_net:'Net pay for the full goal: {0}',
+
+    edit_month:'Edit this month',
+    edit_done:'Done · month unlocked',
+
+    entry_delete:'Delete',
+    entry_window:'usual window: {0}',
+    btn_holiday:'Holiday', btn_short:'Short day',
+    hint_holiday:'Holiday — the day is excluded from the schedule and does not change the hours goal. Short day — subtracts only the hours you specify from the goal.',
+    ph_short:'How many hours fewer, e.g. 1',
+    clear_mark:'Remove mark',
+    btn_overtime:'Extra shift',
+    hint_overtime:'Extra shift — this day is paid at its own rate instead of the usual one (for example overtime beyond the monthly goal) and counts towards income.',
+    ph_otrate:'rate, ₽/hour, e.g. 440',
+    clear_otrate:'Remove custom rate',
+    btn_cancel:'Cancel', btn_save:'Save',
+    err_format:'Format: HH:MM:SS — for example, 04:06:44',
+    err_minsec:'Minutes and seconds must be 59 or less',
+    tip_holiday:'Holiday', tip_overtime:'Extra shift · {0} ₽/h',
+
+    pay_label:'payout',
+    pay_today:'today', pay_tomorrow:'tomorrow', pay_in:'in {0} days',
+    no_data:'no data', before_tax:'before tax {0}',
+    month_total:'Month total',
+
+    sched_title:'Schedule planner', sched_flex:'Flexible', sched_flex_low:'flexible',
+    work_time:'Working hours', weekdays:'Weekdays', weekends:'Weekends',
+    sched_legend:'suggested working days for the “{0}” pattern in {1}. Holidays are never suggested; days off land on Sat/Sun where possible.',
+    sched_empty:'Enter the number of shifts in the goal on the left to see suggestions.',
+    breaks_title:'Hour-by-hour plan',
+    breaks_weekday:'Weekdays:', breaks_weekend:'Weekends:',
+    breaks_need_weekday:'set weekday hours above', breaks_need_weekend:'set weekend hours above',
+    breaks_note:'A 5-minute break roughly every hour plus one 15-minute break mid-shift — following OSHA/NIOSH guidance for computer work and Duke Health guidance for call-centre operators. Adapts to shift length.',
+    work_w:'work', break_w:'break',
+
+    set_lang:'Language', set_backup:'Backup',
+    set_backup_note:'Saves and restores all app data to a plain file — independent of Supabase.',
+    set_export:'Export to file', set_import:'Import from file',
+
+    about_work_t:'Work',
+    about_work_b:'This is where you log the hours you actually worked — click a date in the calendar. In “Monthly goal” you set the number of shifts, hours per shift, hourly rate and tax factor; both payouts (1–15 and 16–end) and the month total are calculated from them.<br><br>The “Holiday” and “Short day” buttons in the day card mark a day as non-working or shortened. A holiday does not change the hours goal — it is simply a non-working marker (red outline) and is never suggested in the schedule. A short day subtracts exactly the hours you specify from the goal (amber outline).<br><br>The “Extra shift” button marks a day with its own rate (for example overtime paid differently) — that rate is used instead of the usual one for that day, and the day gets a purple outline.<br><br>On the right is the schedule planner: pick a shift pattern (5/2, 2/2, 7/0 or Flexible — for remote or irregular work) and the small calendar shows the suggested working days needed to hit your goal, with days off on Sat/Sun where possible. Working hours and break recommendations live there too.',
+    about_hist_t:'Past months',
+    about_hist_b:'Use the arrows at the top to page through months. Past months are read-only by default so an already-calculated salary cannot be changed by accident. The “Edit this month” link under the calendar temporarily unlocks it.',
+    about_set_t:'Settings',
+    about_set_b:'Interface language — Russian or English, switched instantly. Export saves all app data into a single file on your computer as an independent backup. Import restores data from such a file, for example when moving to another machine.',
+    about_data_t:'Where the data lives',
+    about_data_b:'All data is stored in your own Supabase database, not at Anthropic — the app keeps working without Claude. The backup file from Settings is extra protection in case you ever need to move the data elsewhere.',
+
+    h_unit:'h', m_unit:'min'
+  }
+};
+
+const MONTHS_BY_LANG = {
+  ru:["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"],
+  en:["January","February","March","April","May","June","July","August","September","October","November","December"]
+};
+const MONTHS_G_BY_LANG = {
+  ru:["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"],
+  en:["January","February","March","April","May","June","July","August","September","October","November","December"]
+};
+const DAYS_BY_LANG = {
+  ru:["Пн","Вт","Ср","Чт","Пт","Сб","Вс"],
+  en:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+};
+
+let LANG = 'ru';
+try { const sv = localStorage.getItem('lang'); if (sv==='ru'||sv==='en') LANG = sv; } catch(e){}
+
+function t(k){
+  const dict = I18N[LANG] || I18N.ru;
+  let s = (dict[k]!==undefined) ? dict[k] : (I18N.ru[k]!==undefined ? I18N.ru[k] : k);
+  for (let i=1; i<arguments.length; i++) s = s.split('{'+(i-1)+'}').join(arguments[i]);
+  return s;
+}
+function MONTHS(i){ return MONTHS_BY_LANG[LANG][i]; }
+function MONTHS_G(i){ return MONTHS_G_BY_LANG[LANG][i]; }
+function DAY_NAMES(){ return DAYS_BY_LANG[LANG]; }
+
+function setLang(l){
+  if (l!=='ru' && l!=='en') return;
+  LANG = l;
+  document.documentElement.lang = l;
+  try { localStorage.setItem('lang', l); } catch(e){}
+  sSet('lang', l);
+  render();
+}
+
+/* ══════════════ STATE ══════════════ */
+let TAB='work';
+const now0=new Date();
+let Y=now0.getFullYear(), Mo=now0.getMonth(), sel=null;
+let RATE=220, TAX=0.87;
+let workData={}, workSettings={}, holidayAdj={}, holidayInputMode=null, overtimeRate={}, overtimeInputMode=false, justOpenedEntry=false;
+let scheduleHours={weekdayFrom:'06:00', weekdayTo:'21:00', weekendFrom:'09:00', weekendTo:'18:00'}, dayHours={};
+let saveTimer=null;
+let workEditUnlocked={};
+
+function mKey(y,mo){ return y+'-'+String(mo+1).padStart(2,'0'); }
+function isPastMonth(y,mo){ return (y<now0.getFullYear()) || (y===now0.getFullYear() && mo<now0.getMonth()); }
+
+/* ══════════════ INIT ══════════════ */
+function renderLoadError(msg){
+  document.getElementById('content').innerHTML =
+    '<div class="content-inner"><div class="group-label">'+t('err_title')+'</div>'+
+    '<div class="group-card" style="padding:18px 16px;">'+
+    '<div style="font-size:14px;line-height:1.5;margin-bottom:6px;">'+t('err_body')+'</div>'+
+    '<div style="font-size:12.5px;color:var(--text2);line-height:1.5;">'+t('err_hint')+'</div>'+
+    (msg?'<div style="font-size:11.5px;color:var(--text3);margin-top:8px;word-break:break-word;">'+escapeHtml(String(msg))+'</div>':'')+
+    '</div><button class="add-note-btn" onclick="init()" style="margin-top:10px;">'+t('err_retry')+'</button></div>';
+}
+
+function renderConfigError(){
+  document.getElementById('content').innerHTML =
+    '<div class="content-inner"><div class="group-label">'+t('cfg_title')+'</div>'+
+    '<div class="group-card" style="padding:18px 16px;">'+
+    '<div style="font-size:14px;line-height:1.5;margin-bottom:6px;">'+t('cfg_body')+'</div>'+
+    '<div style="font-size:12.5px;color:var(--text2);line-height:1.5;">'+t('cfg_hint')+'</div>'+
+    '</div><button class="add-note-btn" onclick="location.reload()" style="margin-top:10px;">'+t('cfg_reload')+'</button></div>';
+}
+
+async function init(){
+  renderRail();
+  document.getElementById('topbar').textContent = t('nav_'+TAB);
+  if (!CONFIG_OK){ renderConfigError(); return; }
+  document.getElementById('content').innerHTML =
+    '<div class="empty-state" style="padding:40px 0;text-align:center;">'+t('loading')+'</div>';
+
+  const KEYS = ['payRate','payTax','workData','workSettings','holidayAdj','scheduleHours','dayHours','overtimeRate','lang'];
+  let raw;
+  try {
+    const vals = await Promise.all(KEYS.map(k=>sGetStrict(k)));
+    raw = {}; KEYS.forEach((k,i)=>{ raw[k]=vals[i]; });
+  } catch(e){
+    renderLoadError(e && e.message);
+    return;
+  }
+
+  if (raw.lang==='ru' || raw.lang==='en'){
+    LANG = raw.lang;
+    document.documentElement.lang = LANG;
+    try { localStorage.setItem('lang', LANG); } catch(e){}
+  }
+
+  RATE = raw.payRate || 220;
+  TAX = raw.payTax || 0.87;
+  workData = raw.workData || {};
+  workSettings = raw.workSettings || {};
+  holidayAdj = raw.holidayAdj || {};
+  Object.keys(holidayAdj).forEach(k=>{
+    const v = holidayAdj[k];
+    if (typeof v === 'number'){
+      const [yy,mm] = k.split('-').map(Number);
+      const ws = workSettings[yy+'-'+String(mm).padStart(2,'0')] || {};
+      const perShift = Number(ws.hoursPerShift)||0;
+      holidayAdj[k] = (perShift>0 && v===-perShift) ? {type:'holiday'} : {type:'shortened', hours:Math.abs(v)};
+    }
+  });
+  scheduleHours = raw.scheduleHours || {weekdayFrom:'06:00', weekdayTo:'21:00', weekendFrom:'09:00', weekendTo:'18:00'};
+  dayHours = raw.dayHours || {};
+  overtimeRate = raw.overtimeRate || {};
+
+  render();
+}
+
+/* ══════════════ SHELL ══════════════ */
+const RAIL = [
+  {tab:'work', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8 7V5.5A1.5 1.5 0 0 1 9.5 4h5A1.5 1.5 0 0 1 16 5.5V7"/><path d="M3 12h18"/></svg>', top:true},
+  {tab:'settings', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7.5 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3 14.6a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 7.5l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 10 3.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.5 1.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8"/></svg>'},
+  {tab:'about', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.7" r="0.4" fill="currentColor"/></svg>'}
+];
+function renderRail(){
+  let html='';
+  RAIL.forEach((r,i)=>{
+    if (i===1) html += '<div class="rail-spacer"></div>';
+    html += '<button class="rail-btn'+(TAB===r.tab?' active':'')+'" data-tab="'+r.tab+'" onclick="setTab(\''+r.tab+'\')">'+
+      r.icon+'<span>'+t('nav_'+r.tab)+'</span></button>';
+  });
+  document.getElementById('rail').innerHTML = html;
+}
+function setTab(tb){ TAB=tb; sel=null; render(); }
+document.getElementById('content').addEventListener('focusout', e=>{ if (e.target.matches('input,textarea')) setTimeout(render, 0); });
+document.getElementById('content').addEventListener('mousedown', e=>{ if (e.target.closest('button')) e.preventDefault(); });
+
+function render(){
+  renderRail();
+  document.getElementById('topbar').textContent = t('nav_'+TAB);
+  if (!CONFIG_OK && TAB==='work'){ renderConfigError(); return; }
+  const html = TAB==='work' ? renderWork() : TAB==='settings' ? renderSettings() : renderAbout();
+  document.getElementById('content').innerHTML = '<div class="content-inner"'+(TAB==='work'?' style="max-width:780px;"':'')+'>'+html+'</div>';
+  if (TAB==='work' && sel!==null && justOpenedEntry){
+    const ti=document.getElementById('ti');
+    if(ti){ ti.focus(); ti.setSelectionRange(ti.value.length, ti.value.length); }
+    justOpenedEntry=false;
+  }
+}
+
+/* ══════════════ HELPERS ══════════════ */
+function dim(y,m){ return new Date(y,m+1,0).getDate(); }
+function firstWd(y,m){ const d=new Date(y,m,1).getDay(); return d===0?6:d-1; }
+function parseTime(str){ if(!str) return 0; const [h=0,m=0,s=0]=str.split(':').map(Number); return h+m/60+s/3600; }
+function rubFmt(n){ return Math.round(n).toLocaleString(LANG==='ru'?'ru-RU':'en-US')+' ₽'; }
+function hrsFmt(h){
+  const hh=Math.floor(Math.abs(h)), mm=Math.round((Math.abs(h)-hh)*60);
+  if(!hh&&!mm) return '0 '+t('m_unit');
+  return hh ? (hh+' '+t('h_unit')+(mm?' '+mm+' '+t('m_unit'):'')) : (mm+' '+t('m_unit'));
+}
+function daysTo(date){ const tt=new Date(), today=new Date(tt.getFullYear(),tt.getMonth(),tt.getDate()); return Math.round((date-today)/86400000); }
+function shortDate(date){
+  return LANG==='ru' ? (date.getDate()+' '+MONTHS_G(date.getMonth()))
+                     : (date.getDate()+' '+MONTHS_G(date.getMonth()).slice(0,3));
+}
+function payLbl(diff,date){
+  if(diff<0) return shortDate(date);
+  if(diff===0) return t('pay_today');
+  if(diff===1) return t('pay_tomorrow');
+  if(diff<=30) return t('pay_in', diff);
+  return shortDate(date);
+}
+function periodLabel(from,to){
+  return LANG==='ru' ? (from+' – '+to+' '+MONTHS_G(Mo)) : (MONTHS_G(Mo)+' '+from+' – '+to);
+}
+function keyFor(y,mo,d){ return y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'); }
+function wKey(d){ return keyFor(Y,Mo,d); }
+function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function holidayHourAdj(entry){
+  if (!entry) return 0;
+  if (entry.type==='shortened') return -(Number(entry.hours)||0);
+  return 0; /* holiday: non-working marker, does not reduce the hours goal */
+}
+function calcPeriod(from,to){
+  let h=0, gross=0;
+  for(let d=from; d<=to; d++){
+    const hrs=parseTime(workData[wKey(d)]);
+    h+=hrs;
+    const rate = overtimeRate[wKey(d)] ? Number(overtimeRate[wKey(d)]) : RATE;
+    gross += hrs*rate;
+  }
+  return {h, gross, net:gross*TAX};
+}
+function computeHoursStatusFor(y,mo){
+  const k = mKey(y,mo);
+  const ws = workSettings[k] || {};
+  const shifts=Number(ws.shifts)||0, perShift=Number(ws.hoursPerShift)||0;
+  let target = shifts*perShift;
+  const d = dim(y,mo);
+  let actual=0;
+  for(let dd=1; dd<=d; dd++){
+    const dk=keyFor(y,mo,dd);
+    actual += parseTime(workData[dk]);
+    if (holidayAdj[dk]) target += holidayHourAdj(holidayAdj[dk]);
+  }
+  return {target, actual, remaining: target-actual};
+}
+
+/* ══════════════ SCHEDULE SUGGESTION ══════════════ */
+function generateScheduleSuggestion(y, mo, shiftsTarget, patternType, blocked){
+  blocked = blocked || new Set();
+  const d = dim(y,mo);
+  shiftsTarget = Math.min(Number(shiftsTarget)||0, d);
+  if (shiftsTarget<=0) return [];
+  if (patternType==='flex') return flexibleScheduleSuggestion(y, mo, shiftsTarget, blocked);
+  if (patternType==='7/0'){
+    const days=[]; let count=0;
+    for(let dd=1; dd<=d && count<shiftsTarget; dd++){ if(blocked.has(dd)) continue; days.push(dd); count++; }
+    return days;
+  }
+  const onLen = patternType==='2/2' ? 2 : 5;
+  const offLen = patternType==='2/2' ? 2 : 2;
+  const cycle = onLen+offLen;
+  const buildForPhase = phase => {
+    const days=[]; let count=0;
+    for(let dd=1; dd<=d && count<shiftsTarget; dd++){
+      if (blocked.has(dd)) continue;
+      if (((dd-1+phase)%cycle) < onLen){ days.push(dd); count++; }
+    }
+    return days;
+  };
+  let best=null, bestScore=-1;
+  for(let phase=0; phase<cycle; phase++){
+    const days = buildForPhase(phase);
+    if (days.length<shiftsTarget) continue;
+    let score=0;
+    for(let dd=1; dd<=d; dd++){
+      const wd=new Date(y,mo,dd).getDay();
+      if ((wd===0||wd===6) && !days.includes(dd)) score++;
+    }
+    if (score>bestScore){ bestScore=score; best=days; }
+  }
+  return best || buildForPhase(0);
+}
+function flexibleScheduleSuggestion(y, mo, shiftsTarget, blocked){
+  const d = dim(y,mo);
+  const available=[]; for(let dd=1; dd<=d; dd++) if(!blocked.has(dd)) available.push(dd);
+  const n = Math.min(shiftsTarget, available.length);
+  if (n<=0) return [];
+  const isWeekend = dd => { const wd=new Date(y,mo,dd).getDay(); return wd===0||wd===6; };
+  const used=new Set(), days=[];
+  for(let i=0;i<n;i++){
+    let idx = Math.max(0, Math.min(available.length-1, Math.round((i+0.5)*available.length/n)));
+    let candidate = available[idx];
+    if (isWeekend(candidate)){
+      if (idx-1>=0 && !used.has(available[idx-1]) && !isWeekend(available[idx-1])) candidate=available[idx-1];
+      else if (idx+1<available.length && !used.has(available[idx+1]) && !isWeekend(available[idx+1])) candidate=available[idx+1];
+    }
+    let guard=0;
+    while(used.has(candidate) && guard<available.length){ idx=(idx+1)%available.length; candidate=available[idx]; guard++; }
+    used.add(candidate); days.push(candidate);
+  }
+  return days.sort((a,b)=>a-b);
+}
+
+/* ══════════════ BREAK PLAN ══════════════ */
+function buildBreakPlan(shiftHours){
+  /* 5-minute break roughly every hour (OSHA micro-pauses) plus one 15-minute break
+     near the middle of the shift (NIOSH; Duke Health for call-centre operators).
+     Short shifts get a single break at the midpoint. */
+  if (!shiftHours || shiftHours<=0) return [];
+  const totalMin = shiftHours*60;
+  if (totalMin <= 75){
+    if (totalMin <= 30) return [{type:'work', hours:shiftHours}];
+    const half = totalMin/2;
+    return [
+      {type:'work', hours:half/60},
+      {type:'break', hours:5/60},
+      {type:'work', hours:(totalMin-half)/60},
+    ];
+  }
+  const blocks=[]; let remaining=totalMin, elapsed=0, midGiven=false;
+  const midPoint = totalMin/2;
+  while (remaining > 0.5){
+    const work = Math.min(60, remaining);
+    blocks.push({type:'work', hours:work/60});
+    remaining -= work; elapsed += work;
+    if (remaining > 0.5){
+      const isMid = !midGiven && elapsed >= midPoint;
+      if (isMid) midGiven = true;
+      blocks.push({type:'break', hours:(isMid?15:5)/60});
+    }
+  }
+  return blocks;
+}
+function fmtClock(mins){
+  mins = ((Math.round(mins)%1440)+1440)%1440;
+  const h=Math.floor(mins/60), m=mins%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+function renderBreakPlan(startStr, shiftHours){
+  if (!startStr || !shiftHours) return '';
+  const [sh,sm] = startStr.split(':').map(Number);
+  let cursor = sh*60+sm;
+  return buildBreakPlan(shiftHours).map(b=>{
+    const dur=b.hours*60;
+    const part = fmtClock(cursor)+'–'+fmtClock(cursor+dur)+' '+(b.type==='work'?t('work_w'):t('break_w'));
+    cursor += dur;
+    return part;
+  }).join(' · ');
+}
+function resolvedHoursForDay(y,mo,dd){
+  const k=keyFor(y,mo,dd);
+  if (dayHours[k] && (dayHours[k].from||dayHours[k].to)) return (dayHours[k].from||'—')+'–'+(dayHours[k].to||'—');
+  const wd=new Date(y,mo,dd).getDay();
+  return (wd===0||wd===6) ? scheduleHours.weekendFrom+'–'+scheduleHours.weekendTo : scheduleHours.weekdayFrom+'–'+scheduleHours.weekdayTo;
+}
+
+/* ══════════════ WORK ══════════════ */
+function toggleWorkEdit(key){ workEditUnlocked[key]=!workEditUnlocked[key]; if(!workEditUnlocked[key]) sel=null; render(); }
+
+function renderWork(){
+  const wKeyStr = mKey(Y,Mo);
+  const isPast = isPastMonth(Y,Mo);
+  const canEdit = !isPast || !!workEditUnlocked[wKeyStr];
+  const d=dim(Y,Mo), fw=firstWd(Y,Mo);
+  const p1=calcPeriod(1,15), p2=calcPeriod(16,d);
+  const tot={h:p1.h+p2.h, gross:p1.gross+p2.gross, net:p1.net+p2.net};
+  const pay1=new Date(Y,Mo,24), pay2=new Date(Y,Mo+1,9);
+  const df1=daysTo(pay1), df2=daysTo(pay2);
+  const isToday = n => n===now0.getDate() && Mo===now0.getMonth() && Y===now0.getFullYear();
+  const ws = workSettings[wKeyStr] || {};
+  const perShift = Number(ws.hoursPerShift)||0;
+  const schedType = (ws.scheduleType==='custom' ? 'flex' : ws.scheduleType) || '5/2';
+  const blockedDays = new Set();
+  for(let dd=1; dd<=d; dd++){ const adj=holidayAdj[keyFor(Y,Mo,dd)]; if(adj && adj.type==='holiday') blockedDays.add(dd); }
+  const suggested = new Set(generateScheduleSuggestion(Y, Mo, ws.shifts, schedType, blockedDays));
+
+  const cells=[...Array(fw).fill(null), ...Array.from({length:d},(_,i)=>i+1)];
+  while(cells.length%7!==0) cells.push(null);
+  const dayLabels = DAY_NAMES().map((n,i)=>'<div class="day-label'+(i===6?' sun':'')+'">'+n+'</div>').join('');
+  const grid = cells.map((n,i)=>{
+    if(!n) return '<div class="cell empty"></div>';
+    const worked = !!workData[wKey(n)];
+    const dAdj = holidayAdj[wKey(n)];
+    const hasOt = !!overtimeRate[wKey(n)];
+    const dMark = dAdj ? (dAdj.type==='holiday' ? 'day-off-marked' : 'shortened-marked') : (hasOt ? 'overtime-marked' : '');
+    const cls = ['cell', isToday(n)?'today':'', sel===n?'selected':'', dMark, i%7===6?'sun':''].filter(Boolean).join(' ');
+    const tip = dAdj && dAdj.type==='holiday' ? t('tip_holiday') : hasOt ? t('tip_overtime', overtimeRate[wKey(n)]) : resolvedHoursForDay(Y,Mo,n);
+    return '<div class="'+cls+'"'+(canEdit?' onclick="clickDay('+n+')"':'')+' title="'+tip+'"><span class="day-num">'+n+'</span>'+(worked?'<div class="dot"></div>':'')+'</div>';
+  }).join('');
+
+  let entry='';
+  if (sel!==null){
+    const hasEntry = !!workData[wKey(sel)];
+    const curAdj = holidayAdj[wKey(sel)];
+    const isHoliday = curAdj && curAdj.type==='holiday';
+    const isShortened = curAdj && curAdj.type==='shortened';
+    const showShortInput = isShortened || holidayInputMode==='shortened';
+    const otRate = overtimeRate[wKey(sel)];
+    const showOtInput = !!otRate || overtimeInputMode;
+    const dateLabel = LANG==='ru' ? (sel+' '+MONTHS_G(Mo)) : (MONTHS_G(Mo)+' '+sel);
+    entry = '<div class="entry-panel"><div class="entry-header"><span class="entry-date">'+dateLabel+'</span>'+
+      (hasEntry?'<button class="icon-btn red" onclick="deleteDay()" title="'+t('entry_delete')+'">×</button>':'')+'</div>'+
+      '<input id="ti" class="time-input" type="text" inputmode="numeric" placeholder="00:00:00" value="'+(workData[wKey(sel)]||'')+'" oninput="onTimeInput(this)" onkeydown="onTimeKey(event)" autocomplete="off">'+
+      '<div id="err" class="entry-error"></div>'+
+      '<div class="period-meta" style="text-align:center;margin-top:2px;">'+t('entry_window', resolvedHoursForDay(Y,Mo,sel))+'</div>'+
+      '<div style="display:flex;gap:8px;margin-top:10px;">'+
+      '<button class="btn '+(isHoliday?'btn-save':'btn-cancel')+'" onclick="markHoliday()">'+t('btn_holiday')+'</button>'+
+      '<button class="btn '+(showShortInput?'btn-save':'btn-cancel')+'" onclick="toggleShortenedInput()">'+t('btn_short')+'</button>'+
+      '</div>'+
+      '<div class="period-meta" style="margin-top:6px;">'+t('hint_holiday')+'</div>'+
+      (showShortInput ? '<input class="setting-input" style="width:100%;margin-top:8px;" type="number" step="0.5" placeholder="'+t('ph_short')+'" value="'+(isShortened?curAdj.hours:'')+'" oninput="setShortenedHours(this.value)">' : '')+
+      (curAdj ? '<button class="icon-btn" style="color:var(--text2);font-size:11px;margin-top:8px;" onclick="clearHolidayAdj()">'+t('clear_mark')+'</button>' : '')+
+      '<button class="btn '+(otRate?'btn-save':'btn-cancel')+'" style="width:100%;margin-top:12px;" onclick="toggleOvertimeInput()">'+t('btn_overtime')+(otRate?' — '+otRate+' ₽/'+t('h_unit'):'')+'</button>'+
+      '<div class="period-meta" style="margin-top:6px;">'+t('hint_overtime')+'</div>'+
+      (showOtInput ? '<input class="setting-input" style="width:100%;margin-top:8px;" type="number" placeholder="'+t('ph_otrate')+'" value="'+(otRate||'')+'" oninput="setOvertimeRate(this.value)">' : '')+
+      (otRate ? '<button class="icon-btn" style="color:var(--text2);font-size:11px;margin-top:6px;" onclick="clearOvertimeRate()">'+t('clear_otrate')+'</button>' : '')+
+      '<div class="entry-btns"><button class="btn btn-cancel" onclick="closeEntry()">'+t('btn_cancel')+'</button><button class="btn btn-save" onclick="saveEntry()">'+t('btn_save')+'</button></div></div>';
+  }
+
+  const pCard = (label,p,payDate,diff,dot) => {
+    const urgent = diff>=0 && diff<=3, hrs = p.h>0 ? hrsFmt(p.h) : null;
+    return '<div class="period-card"><div class="period-row"><div>'+
+      '<div class="period-label"><span class="period-dot" style="background:'+dot+'"></span>'+label+'</div>'+
+      '<div class="period-amount'+(p.net===0?' zero':'')+'">'+rubFmt(p.net)+'</div>'+
+      '<div class="period-meta">'+(hrs ? hrs+' &nbsp;·&nbsp; '+t('before_tax', rubFmt(p.gross)) : t('no_data'))+'</div></div>'+
+      '<div class="pay-badge'+(urgent?' urgent':'')+'"><div class="pay-badge-label">'+t('pay_label')+'</div><div class="pay-badge-value">'+payLbl(diff,payDate)+'</div></div></div></div>';
+  };
+
+  const hs = computeHoursStatusFor(Y,Mo);
+  const dis = canEdit ? '' : ' disabled';
+  const goalStatus = hs.target>0
+    ? t('goal_line', hrsFmt(hs.target), hrsFmt(hs.actual), (hs.remaining>=0 ? t('goal_left', hrsFmt(hs.remaining)) : t('goal_over', hrsFmt(hs.remaining))))
+    : t('goal_empty');
+  const goalCard = '<div class="period-card"><div class="period-label" style="margin-bottom:8px;">'+t('goal_title')+'</div>'+
+    '<div class="setting-row"><input class="setting-input" type="number" placeholder="'+t('ph_shifts')+'" value="'+(ws.shifts||'')+'" oninput="setWorkSetting(\'shifts\', this.value)"'+dis+'>'+
+    '<input class="setting-input" type="number" placeholder="'+t('ph_hours')+'" value="'+(ws.hoursPerShift||'')+'" oninput="setWorkSetting(\'hoursPerShift\', this.value)"'+dis+'></div>'+
+    '<div class="setting-row" style="margin-top:8px;margin-bottom:0;"><input class="setting-input" type="number" placeholder="'+t('ph_rate')+'" value="'+RATE+'" oninput="setPayRate(this.value)"'+dis+'>'+
+    '<input class="setting-input" type="number" step="0.01" placeholder="'+t('ph_tax')+'" value="'+TAX+'" oninput="setPayTax(this.value)"'+dis+'></div>'+
+    '<div class="period-meta" style="margin-top:10px;">'+goalStatus+'</div>'+
+    (hs.target>0 ? '<div class="period-meta" style="margin-top:5px;color:var(--green);font-weight:600;font-size:12px;">'+t('goal_net', rubFmt(hs.target*RATE*TAX))+'</div>' : '')+'</div>';
+
+  const totHrs = tot.h>0 ? hrsFmt(tot.h) : null;
+  const editLink = isPast ? '<button class="edit-link'+(canEdit?' active':'')+'" onclick="toggleWorkEdit(\''+wKeyStr+'\')">'+(canEdit?t('edit_done'):t('edit_month'))+'</button>' : '';
+  const workMain = '<div class="month-header"><button class="nav-btn" onclick="prevMo()">&#8249;</button><span class="month-title">'+MONTHS(Mo)+' '+Y+'</span><button class="nav-btn" onclick="nextMo()">&#8250;</button></div>'+
+    goalCard+'<div class="divider"></div>'+
+    '<div class="day-labels">'+dayLabels+'</div><div class="cal-grid">'+grid+'</div>'+editLink+entry+'<div class="divider"></div>'+
+    pCard(periodLabel(1,15), p1, pay1, df1, '#0a84ff')+pCard(periodLabel(16,d), p2, pay2, df2, '#30d158')+
+    '<div class="total-card"><div><div class="total-label">'+t('month_total')+'</div><div class="total-meta">'+(totHrs?totHrs+' &nbsp;·&nbsp; '+t('before_tax', rubFmt(tot.gross)):t('no_data'))+'</div></div><div class="total-amount">'+rubFmt(tot.net)+'</div></div>';
+
+  /* separate planner calendar — unrelated to logging actual hours */
+  const schedLabels = {'5/2':'5/2','2/2':'2/2','7/0':'7/0','flex':t('sched_flex_low')};
+  const pillBtn = (type,label) => '<button class="pill'+(schedType===type?' active':'')+'" onclick="setScheduleType(\''+type+'\')">'+label+'</button>';
+  const sugDayLabels = DAY_NAMES().map((n,i)=>'<div class="day-label'+(i===6?' sun':'')+'">'+n.slice(0,1)+'</div>').join('');
+  const sugGrid = cells.map((n,i)=>{
+    if(!n) return '<div class="cell empty"></div>';
+    const worked = !!workData[wKey(n)];
+    const isHol = blockedDays.has(n);
+    const cls=['cell', isToday(n)?'today':'', (suggested.has(n)&&!isHol)?'suggested-day':'', isHol?'day-off-marked':'', i%7===6?'sun':''].filter(Boolean).join(' ');
+    const tip = isHol ? t('tip_holiday') : resolvedHoursForDay(Y,Mo,n);
+    return '<div class="'+cls+'" title="'+tip+'"><span class="day-num">'+n+'</span>'+(worked?'<div class="dot"></div>':'')+'</div>';
+  }).join('');
+  const winRow = (label,fromField,toField) => '<div style="font-size:12px;color:var(--text2);margin-bottom:5px;">'+label+'</div>'+
+    '<div class="setting-row" style="margin-bottom:10px;">'+
+    '<input class="setting-input" type="time" value="'+scheduleHours[fromField]+'" oninput="setScheduleHour(\''+fromField+'\', this.value)">'+
+    '<input class="setting-input" type="time" value="'+scheduleHours[toField]+'" oninput="setScheduleHour(\''+toField+'\', this.value)">'+
+    '</div>';
+  const weekdayPlan = renderBreakPlan(scheduleHours.weekdayFrom, perShift);
+  const weekendPlan = renderBreakPlan(scheduleHours.weekendFrom, perShift);
+  const workSide = '<div class="period-card">'+
+    '<div class="period-label" style="margin-bottom:8px;">'+t('sched_title')+'</div>'+
+    '<div class="pill-row">'+pillBtn('5/2','5/2')+pillBtn('2/2','2/2')+pillBtn('7/0','7/0')+pillBtn('flex',t('sched_flex'))+'</div>'+
+    '<div class="period-label" style="margin:14px 0 8px;">'+t('work_time')+'</div>'+
+    winRow(t('weekdays'),'weekdayFrom','weekdayTo')+winRow(t('weekends'),'weekendFrom','weekendTo')+
+    '<div class="month-title" style="margin:10px 0 8px;font-size:13px;color:var(--text2);">'+MONTHS(Mo)+'</div>'+
+    '<div class="routine-cal compact suggest-cal"><div class="day-labels">'+sugDayLabels+'</div><div class="cal-grid">'+sugGrid+'</div></div>'+
+    '<div class="period-meta" style="margin-top:10px;">'+(ws.shifts ?
+      '<span class="legend-dash"></span>'+t('sched_legend', schedLabels[schedType], MONTHS_G(Mo))
+      : t('sched_empty'))+'</div>'+
+    (perShift>0 ? '<div class="period-label" style="margin:14px 0 6px;">'+t('breaks_title')+'</div>'+
+      '<div class="period-meta" style="margin-bottom:6px;"><b style="color:var(--text);">'+t('breaks_weekday')+'</b> '+(weekdayPlan||t('breaks_need_weekday'))+'</div>'+
+      '<div class="period-meta"><b style="color:var(--text);">'+t('breaks_weekend')+'</b> '+(weekendPlan||t('breaks_need_weekend'))+'</div>'+
+      '<div class="period-meta" style="margin-top:6px;color:var(--text3);">'+t('breaks_note')+'</div>'
+      : '')+
+    '</div>';
+
+  return '<div class="work-layout"><div class="work-main">'+workMain+'</div><div class="work-side">'+workSide+'</div></div>';
+}
+
+/* ══════════════ WORK ACTIONS ══════════════ */
+function setPayRate(val){
+  clearTimeout(saveTimer);
+  if (val==='') return;
+  const v=Number(val); if(isNaN(v)) return;
+  saveTimer=setTimeout(()=>{ RATE=v; sSet('payRate', RATE); },600);
+}
+function setPayTax(val){
+  clearTimeout(saveTimer);
+  if (val==='') return;
+  const v=Number(val); if(isNaN(v)) return;
+  saveTimer=setTimeout(()=>{ TAX=v; sSet('payTax', TAX); },600);
+}
+function markHoliday(){
+  holidayAdj[wKey(sel)] = {type:'holiday'};
+  holidayInputMode=null;
+  sSet('holidayAdj', holidayAdj); render();
+}
+function toggleShortenedInput(){ holidayInputMode = holidayInputMode==='shortened' ? null : 'shortened'; render(); }
+function setShortenedHours(val){
+  const k=wKey(sel);
+  clearTimeout(saveTimer);
+  if (val==='') return;
+  const v=Number(val); if(isNaN(v)) return;
+  saveTimer=setTimeout(()=>{ holidayAdj[k]={type:'shortened', hours:Math.abs(v)}; sSet('holidayAdj', holidayAdj); },500);
+}
+function clearHolidayAdj(){ delete holidayAdj[wKey(sel)]; holidayInputMode=null; sSet('holidayAdj', holidayAdj); render(); }
+function setScheduleHour(field,val){
+  scheduleHours[field]=val;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>sSet('scheduleHours', scheduleHours),400);
+}
+function setWorkSetting(field,val){
+  const k=mKey(Y,Mo);
+  const cur = workSettings[k] || {};
+  cur[field] = val===''? '' : Number(val);
+  workSettings[k]=cur;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{ sSet('workSettings', workSettings); }, 500);
+}
+function setScheduleType(type){
+  const k=mKey(Y,Mo);
+  const cur = workSettings[k] || {};
+  cur.scheduleType = type;
+  workSettings[k]=cur;
+  sSet('workSettings', workSettings); render();
+}
+function prevMo(){ if(Mo===0){Y--;Mo=11;} else Mo--; sel=null; holidayInputMode=null; overtimeInputMode=false; render(); }
+function nextMo(){ if(Mo===11){Y++;Mo=0;} else Mo++; sel=null; holidayInputMode=null; overtimeInputMode=false; render(); }
+function clickDay(n){ sel=(sel===n)?null:n; holidayInputMode=null; overtimeInputMode=false; justOpenedEntry = sel!==null; render(); }
+function closeEntry(){ sel=null; holidayInputMode=null; overtimeInputMode=false; render(); }
+function onTimeInput(el){
+  const digs = el.value.replace(/\D/g,'').slice(0,6);
+  let f=digs;
+  if (digs.length>4) f=digs.slice(0,2)+':'+digs.slice(2,4)+':'+digs.slice(4);
+  else if (digs.length>2) f=digs.slice(0,2)+':'+digs.slice(2);
+  el.value=f;
+  const err=document.getElementById('err'); if(err) err.textContent='';
+}
+function onTimeKey(e){ if(e.key==='Enter') saveEntry(); if(e.key==='Escape') closeEntry(); }
+function showErr(msg){ const el=document.getElementById('err'); if(el) el.textContent=msg; }
+function saveEntry(){
+  const ti=document.getElementById('ti'); const val= ti? ti.value.trim():'';
+  if (val){
+    if (!/^\d{2}:\d{2}:\d{2}$/.test(val)){ showErr(t('err_format')); return; }
+    const [,mm,ss]=val.split(':').map(Number);
+    if (mm>=60||ss>=60){ showErr(t('err_minsec')); return; }
+    workData[wKey(sel)]=val;
+  } else { delete workData[wKey(sel)]; }
+  sSet('workData', workData); sel=null; holidayInputMode=null; overtimeInputMode=false; render();
+}
+function deleteDay(){ delete workData[wKey(sel)]; sSet('workData', workData); sel=null; holidayInputMode=null; overtimeInputMode=false; render(); }
+function toggleOvertimeInput(){ overtimeInputMode=!overtimeInputMode; render(); }
+function setOvertimeRate(val){
+  if (val==='') return;
+  const v=Number(val); if(isNaN(v)||v<=0) return;
+  const k=wKey(sel);
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{ overtimeRate[k]=v; sSet('overtimeRate', overtimeRate); },500);
+}
+function clearOvertimeRate(){ delete overtimeRate[wKey(sel)]; overtimeInputMode=false; sSet('overtimeRate', overtimeRate); render(); }
+
+/* ══════════════ SETTINGS ══════════════ */
+async function exportAllData(){
+  if (!window.nativeFile) return;
+  const all = { workData, workSettings, holidayAdj, overtimeRate, scheduleHours, dayHours, payRate:RATE, payTax:TAX, lang:LANG };
+  await window.nativeFile.exportData(JSON.stringify(all, null, 2));
+}
+async function importAllData(){
+  if (!window.nativeFile) return;
+  const str = await window.nativeFile.importData();
+  if (!str) return;
+  try {
+    const all = JSON.parse(str);
+    for (const k of Object.keys(all)) await sSet(k, all[k]);
+    location.reload();
+  } catch(e){}
+}
+function renderSettings(){
+  return '<div class="group-label">'+t('set_lang')+'</div>'+
+    '<div class="lang-row">'+
+    '<button class="lang-btn'+(LANG==='ru'?' active':'')+'" onclick="setLang(\'ru\')">Русский</button>'+
+    '<button class="lang-btn'+(LANG==='en'?' active':'')+'" onclick="setLang(\'en\')">English</button>'+
+    '</div>'+
+    '<div class="group-label">'+t('set_backup')+'</div>'+
+    '<div class="period-meta" style="margin:0 4px 12px;">'+t('set_backup_note')+'</div>'+
+    '<div style="display:flex;gap:8px;">'+
+    '<button class="add-note-btn" style="margin:0;flex:1;" onclick="exportAllData()">'+t('set_export')+'</button>'+
+    '<button class="add-note-btn" style="margin:0;flex:1;" onclick="importAllData()">'+t('set_import')+'</button>'+
+    '</div>';
+}
+
+/* ══════════════ ABOUT ══════════════ */
+function renderAbout(){
+  const sec = (title, body) => '<div class="group-label">'+title+'</div><div class="period-meta" style="margin:0 4px 16px;line-height:1.55;font-size:12.5px;">'+body+'</div>';
+  return sec(t('about_work_t'), t('about_work_b'))+
+    sec(t('about_hist_t'), t('about_hist_b'))+
+    sec(t('about_set_t'), t('about_set_b'))+
+    sec(t('about_data_t'), t('about_data_b'));
+}
+
+init();
+</script>
+</body>
+</html>
