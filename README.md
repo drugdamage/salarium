@@ -4,37 +4,45 @@ Log the hours you worked, see how much you'll get paid.
 
 ![Salarium](screenshots/work-tab.png)
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)
-![Electron](https://img.shields.io/badge/Electron-29-47848F?logo=electron&logoColor=white)
+## How to run it
 
-## What it does
+### 1. Install Node.js
 
-- Calendar: click a day, enter the hours you worked
-- Monthly goal: shifts × hours × rate × tax factor = what you'll get
-- Two payouts: days 1–15 (paid on the 24th) and 16–end (paid on the 9th)
-- Mark days as holiday, short day, or extra shift with its own rate
-- Schedule planner (5/2, 2/2, 7/0, flexible) and break suggestions
-- Past months are locked so you don't change them by accident
-- English / Russian, JSON backup in Settings
+Download the **LTS** version from [nodejs.org](https://nodejs.org) and
+install it (version 18 or newer). To check that it worked, open Terminal
+(macOS) or Command Prompt (Windows) and run:
 
-## Setup
+```sh
+node -v
+```
 
-You need [Node.js](https://nodejs.org) 18+ and a free
-[Supabase](https://supabase.com) account (that's where your data is
-stored).
+You should see something like `v22.x.x`.
 
-1. **Clone**
+### 2. Download Salarium
 
-   ```sh
-   git clone https://github.com/drugdamage/salarium.git
-   cd salarium
-   ```
+Either click **Code → Download ZIP** on this page and unzip it, or run:
 
-2. **Create a Supabase project** at [supabase.com](https://supabase.com)
-   (New project → any name and password → wait a minute).
+```sh
+git clone https://github.com/drugdamage/salarium.git
+```
 
-3. **Create the table.** In Supabase open **SQL Editor**, paste this, click **Run**:
+### 3. Create a free Supabase database
+
+Your data is stored in your own free Supabase database.
+
+1. Go to [supabase.com](https://supabase.com) and sign in (GitHub login works).
+2. Click **New project**.
+3. Enter any name (e.g. `salarium`), make up a database password, and
+   pick the region closest to you.
+4. Click **Create new project** and wait 1–2 minutes until it's ready.
+
+> If the Supabase site doesn't load or looks broken, turn off your ad
+> blocker (uBlock etc.) for supabase.com.
+
+### 4. Create the table
+
+1. In your project, open **SQL Editor** from the left sidebar (the `>_` icon).
+2. Paste this:
 
    ```sql
    create table if not exists kv_store (
@@ -46,58 +54,59 @@ stored).
    create policy "salarium" on kv_store for all to anon using (true) with check (true);
    ```
 
-4. **Add your keys.** In Supabase, click **Connect** at the top of the
-   project page and copy the **Project URL** and the **publishable** (or
-   **anon**) key (also in **Project Settings → API Keys**). Then:
+3. Click **Run**. You should see `Success. No rows returned`.
 
-   ```sh
-   cp config.example.js config.js
+### 5. Connect the app to your database
+
+1. In Supabase, click **Connect** at the top of the project page (or go to
+   **Project Settings → API Keys**).
+2. Copy two things:
+   - **Project URL**, which looks like `https://abcdefghijkl.supabase.co`
+   - **publishable key**, which starts with `sb_publishable_` (on older
+     projects it's called the **anon** key)
+3. In the Salarium folder, make a copy of `config.example.js` and name it
+   `config.js`.
+4. Open `config.js` in any text editor and paste your values in place of the
+   placeholders:
+
+   ```js
+   window.SALARIUM_CONFIG = {
+     SUPABASE_URL: 'https://abcdefghijkl.supabase.co',
+     SUPABASE_KEY: 'sb_publishable_...',
+   };
    ```
 
-   and paste both values into `config.js`.
+The key works like a password to your database, so don't share
+`config.js` with anyone.
 
-5. **Run**
+### 6. Start it
 
-   ```sh
-   npm install
-   npm start
-   ```
+In Terminal / Command Prompt, go to the Salarium folder and run:
 
-## Build an app
+```sh
+npm install
+npm start
+```
 
-- **macOS:** double-click `SETUP.command` → `dist/mac-arm64/Salarium.app`
-- **Windows:** double-click `SETUP.bat` → `dist\win-unpacked\Salarium.exe`
+The first `npm install` takes a minute or two. After that, `npm start` is
+enough.
 
-Fill in `config.js` first, since it gets built into the app.
+### 7. Optional: build a real app
 
-**macOS says the app is damaged or can't be opened?** It's not signed.
-Right-click → Open, or run:
+So you don't need the terminal every time:
+
+- **macOS:** double-click `SETUP.command`. The app appears in
+  `dist/mac-arm64/Salarium.app`. Drag it into Applications.
+- **Windows:** double-click `SETUP.bat`. The app appears in
+  `dist\win-unpacked\Salarium.exe`.
+
+If macOS says the app **is damaged** or **can't be opened**, that's because
+it isn't signed. Run this once in Terminal:
 
 ```sh
 xattr -cr dist/mac-arm64/Salarium.app
 ```
 
-## Good to know
-
-- The key in `config.js` works like a password to your database. Don't
-  share it or the built app. `config.js` is never committed to git.
-- One database = one person. There are no accounts or logins.
-- Data keys in the table: `workData`, `workSettings`, `holidayAdj`,
-  `overtimeRate`, `scheduleHours`, `dayHours`, `payRate`, `payTax`, `lang`.
-
 ## License
 
 [MIT](LICENSE)
-
----
-
-## На русском
-
-Salarium записывает отработанные часы и считает зарплату: цель на месяц,
-две выплаты (1–15 и 16–конец месяца), праздники, сокращённые дни и доп.
-смены, подбор графика.
-
-Как запустить: создайте проект в Supabase, выполните SQL из шага 3,
-скопируйте `config.example.js` в `config.js`, впишите туда Project URL и
-ключ, затем выполните `npm install && npm start`. Ключ из `config.js`
-работает как пароль к вашей базе, никому его не передавайте.
