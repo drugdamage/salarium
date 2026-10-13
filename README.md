@@ -2,6 +2,10 @@
 
 Log the hours you worked, see how much you'll get paid.
 
+Two payouts a month, a monthly goal, a shift planner with breaks, and a
+read-only lock on past months. Light and dark mode, six languages
+(English, German, Spanish, French, Russian, Ukrainian), any currency.
+
 ![Salarium](screenshots/work-tab.png)
 
 ## How to run it
@@ -90,6 +94,9 @@ npm start
 
 The first `npm install` takes a minute or two. After that, `npm start` is
 enough.
+
+Open **Settings** to pick your language, currency, theme, hourly rate, tax
+and paydays.
 
 ### 7. Optional: build a real app
 
