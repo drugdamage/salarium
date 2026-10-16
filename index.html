@@ -149,6 +149,10 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 
 /* ══════════════ WORK ══════════════ */
 .summary{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:14px;}
+.summary.n1{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);}
+.summary.n3{grid-template-columns:repeat(3,minmax(0,1fr));}
+.summary.n4{grid-template-columns:repeat(4,minmax(0,1fr));}
+.summary.n3 .hero,.summary.n4 .hero{grid-column:1/-1;}
 .hero{position:relative;overflow:hidden;border-radius:16px;padding:20px 22px;color:#fff;background:linear-gradient(135deg,#1b8cff 0%,#0a6ce0 55%,#0757c2 100%);box-shadow:0 6px 24px rgba(10,108,224,.25);}
 .hero-art{position:absolute;right:-26px;top:-18px;width:150px;opacity:.16;pointer-events:none;}
 .hero-label{font-size:12.5px;font-weight:600;opacity:.85;}
@@ -251,12 +255,17 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .row-text{flex:1;min-width:0;}
 .row-label{font-size:13.5px;font-weight:550;}
 .row-sub{font-size:12px;color:var(--text2);margin-top:2px;}
-.row-ctl{flex-shrink:0;display:flex;align-items:center;}
+.row-ctl{flex-shrink:0;display:flex;align-items:center;gap:6px;}
 .row-ctl .seg button{flex:1 0 auto;padding:0 14px;}
 .row-ctl .affix{width:150px;}
 .dd-btn{display:flex;align-items:center;gap:9px;height:34px;padding:0 9px 0 11px;min-width:190px;border-radius:9px;background:var(--fill);font-size:13.5px;font-weight:500;text-align:left;transition:background .12s;}
 .dd-btn:hover{background:var(--fill-hover);}
 .dd-btn.sm{min-width:84px;}
+.dd-static{color:var(--text2);pointer-events:none;}
+.pay-ctl{display:grid;grid-template-columns:100px 64px 172px;gap:6px;}
+.pay-ctl .dd-btn{min-width:0;}
+.pay-ctl .dd-btn{white-space:nowrap;overflow:hidden;}
+.pay-ctl .dd-btn>span:not(.chev){overflow:hidden;text-overflow:ellipsis;}
 .dd-btn .chev{margin-left:auto;width:15px;height:15px;color:var(--text2);}
 .flag{width:21px;height:14px;border-radius:3px;overflow:hidden;flex-shrink:0;position:relative;box-shadow:0 0 0 .5px rgba(0,0,0,.18);}
 .flag svg{width:100%;height:100%;}
@@ -331,8 +340,11 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 
 /* ══════════════ RESPONSIVE ══════════════ */
 @media (max-width:1040px){
-  .summary{grid-template-columns:1fr 1fr;}
+  .summary,.summary.n4{grid-template-columns:1fr 1fr;}
+  .summary.n3{grid-template-columns:repeat(3,minmax(0,1fr));}
   .hero{grid-column:1/-1;}
+  .summary.n1 .hero{grid-column:auto;}
+  .summary.n1{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);}
 }
 @media (max-width:980px){
   .work-grid,.pl-grid{grid-template-columns:minmax(0,1fr);}
@@ -413,7 +425,7 @@ let TAB = 'work';
 const now0 = new Date();
 let Y = now0.getFullYear(), Mo = now0.getMonth();
 let LOAD = CONFIG_OK ? 'loading' : 'config', LOAD_ERR = '';
-let RATE = 220, TAX = 0.87, CUR = 'RUB', PAYDAYS = {first:24, second:9};
+let RATE = 220, TAX = 0.87, CUR = 'RUB', PAY = defaultPay(2);
 let workData = {}, workSettings = {}, holidayAdj = {}, overtimeRate = {};
 let scheduleHours = {weekdayFrom:'06:00', weekdayTo:'21:00', weekendFrom:'09:00', weekendTo:'18:00'}, dayHours = {};
 let workEditUnlocked = {}, breakDay = 'weekday';
@@ -423,7 +435,7 @@ let dayDraft = null, confirmState = null, ddOpen = null;
 const PERSIST = {
   payRate:()=>RATE, payTax:()=>TAX, workData:()=>workData, workSettings:()=>workSettings,
   holidayAdj:()=>holidayAdj, scheduleHours:()=>scheduleHours, dayHours:()=>dayHours,
-  overtimeRate:()=>overtimeRate, lang:()=>LANG, currency:()=>CUR, payDays:()=>PAYDAYS,
+  overtimeRate:()=>overtimeRate, lang:()=>LANG, currency:()=>CUR, payDays:()=>PAY,
 };
 const KEYS = Object.keys(PERSIST);
 
@@ -573,6 +585,44 @@ function cubeArt(){
 const tile = (icon, color) => '<span class="row-icon" style="background:'+color+'">'+ICONS[icon]+'</span>';
 function flagHtml(code){ return '<span class="flag">'+(FLAGS[code]||'')+'</span>'; }
 
+/* ══════════════ PAY SCHEDULE ══════════════ */
+/* The month is split into 1–4 periods. Every period but the last ends on a
+   fixed day (≤27, so even February has room for the rest); the last one runs
+   to the end of the month. Each period is paid on a day of the same or next month. */
+const PAY_MAX = 4, PAY_END_MAX = 27;
+const PAY_COLORS = ['var(--accent)','var(--green)','var(--purple)','var(--amber)'];
+const PAY_TILES = ['#0a84ff','#34c759','#af52de','#ff9500'];
+function defaultPay(n){
+  const ends = {1:[], 2:[15], 3:[10,20], 4:[7,14,21]}[n];
+  return {periods: Array.from({length:n}, (_,i)=>{
+    const e = i<n-1 ? ends[i] : 30, day = e+9;
+    return Object.assign(i<n-1 ? {end:e} : {}, day<=31 ? {day, month:0} : {day:Math.max(1, day-30), month:1});
+  })};
+}
+function cleanPay(v){
+  const ps = v && Array.isArray(v.periods) ? v.periods : null;
+  if (!ps || !ps.length || ps.length>PAY_MAX) return null;
+  let prev = 0;
+  const out = [];
+  for (let i=0; i<ps.length; i++){
+    const day = Number(ps[i].day), month = Number(ps[i].month)===1 ? 1 : 0;
+    if (!(day>=1 && day<=31)) return null;
+    const p = {day, month};
+    if (i<ps.length-1){
+      const end = Number(ps[i].end);
+      if (!(end>prev && end<=PAY_END_MAX-(ps.length-2-i))) return null;
+      p.end = prev = end;
+    }
+    out.push(p);
+  }
+  return {periods:out};
+}
+function payPeriods(){
+  const d = dim(Y,Mo), n = PAY.periods.length;
+  let from = 1;
+  return PAY.periods.map((p,i)=>{ const to = i===n-1 ? d : p.end, r = {i, p, from, to}; from = to+1; return r; });
+}
+
 /* ══════════════ HELPERS ══════════════ */
 function mKey(y,mo){ return y+'-'+String(mo+1).padStart(2,'0'); }
 function isPastMonth(y,mo){ const n=new Date(); return (y<n.getFullYear()) || (y===n.getFullYear() && mo<n.getMonth()); }
@@ -614,10 +664,9 @@ function computeHoursStatusFor(y,mo){
   }
   return {target, actual, remaining: target-actual};
 }
-function payDate(which){
-  if (which===1) return new Date(Y, Mo, Math.min(PAYDAYS.first, dim(Y,Mo)));
-  const ny = Mo===11 ? Y+1 : Y, nm = (Mo+1)%12;
-  return new Date(ny, nm, Math.min(PAYDAYS.second, dim(ny,nm)));
+function payDate(p){
+  const m = new Date(Y, Mo+(p.month||0), 1), ny = m.getFullYear(), nm = m.getMonth();
+  return new Date(ny, nm, Math.min(p.day, dim(ny,nm)));
 }
 function canEditMonth(){ return !isPastMonth(Y,Mo) || !!workEditUnlocked[mKey(Y,Mo)]; }
 
@@ -752,7 +801,9 @@ async function init(){
   RATE = typeof raw.payRate==='number' && raw.payRate>0 ? raw.payRate : 220;
   TAX = typeof raw.payTax==='number' && raw.payTax>=0 && raw.payTax<=1 ? raw.payTax : 0.87;
   CUR = typeof raw.currency==='string' && /^[A-Z]{3}$/.test(raw.currency) ? raw.currency : 'RUB';
-  if (raw.payDays && raw.payDays.first && raw.payDays.second) PAYDAYS = {first:Number(raw.payDays.first), second:Number(raw.payDays.second)};
+  const pd = raw.payDays;
+  if (pd && pd.first && pd.second) PAY = cleanPay({periods:[{end:15, day:pd.first, month:0}, {day:pd.second, month:1}]}) || defaultPay(2);
+  else PAY = cleanPay(pd) || defaultPay(2);
   workData = raw.workData || {};
   workSettings = raw.workSettings || {};
   holidayAdj = raw.holidayAdj || {};
@@ -834,8 +885,8 @@ function toggleWorkEdit(){ const k=mKey(Y,Mo); workEditUnlocked[k]=!workEditUnlo
 function renderWork(){
   const k = mKey(Y,Mo), isPast = isPastMonth(Y,Mo), canEdit = canEditMonth();
   const d = dim(Y,Mo), fw = firstWd(Y,Mo);
-  const p1 = calcPeriod(1,15), p2 = calcPeriod(16,d);
-  const tot = {h:p1.h+p2.h, gross:p1.gross+p2.gross, net:p1.net+p2.net};
+  const periods = payPeriods().map(r=>Object.assign(r, {calc:calcPeriod(r.from, r.to)}));
+  const tot = periods.reduce((a,r)=>({h:a.h+r.calc.h, gross:a.gross+r.calc.gross, net:a.net+r.calc.net}), {h:0, gross:0, net:0});
   const ws = workSettings[k] || {};
   const perShift = Number(ws.hoursPerShift)||0;
   const hs = computeHoursStatusFor(Y,Mo);
@@ -907,9 +958,8 @@ function renderWork(){
     '<div class="stat"><span>'+t('st_tax')+'</span><b class="num">'+taxPct()+'%</b></div></div>';
 
   return '<div class="page">'+
-    '<div class="summary">'+hero+
-      payout(periodLabel(1,15), p1, payDate(1), 'var(--accent)')+
-      payout(periodLabel(16,d), p2, payDate(2), 'var(--green)')+'</div>'+
+    '<div class="summary n'+periods.length+'">'+hero+
+      periods.map(r=>payout(periodLabel(r.from, r.to), r.calc, payDate(r.p), PAY_COLORS[r.i])).join('')+'</div>'+
     '<div class="work-grid">'+calendar+'<div class="side">'+goal+stats+'</div></div>'+
     '</div>';
 }
@@ -1140,23 +1190,32 @@ const DD = {
     items: ()=>CURRENCIES.map(c=>({v:c, icon:'<span class="cur">'+esc(curSymbol(c))+'</span>', label:curName(c), sub:c})),
     pick: v=>{ CUR=v; save('currency'); render(); },
   },
-  pay1: {
-    value: ()=>PAYDAYS.first,
-    items: ()=>Array.from({length:31},(_,i)=>({v:i+1, label:String(i+1)})),
-    pick: v=>{ PAYDAYS.first=v; save('payDays'); render(); },
-  },
-  pay2: {
-    value: ()=>PAYDAYS.second,
-    items: ()=>Array.from({length:31},(_,i)=>({v:i+1, label:String(i+1)})),
-    pick: v=>{ PAYDAYS.second=v; save('payDays'); render(); },
-  },
 };
+/* Per-period dropdowns: 'pend:<i>' (last day of the period), 'pday:<i>' (payday), 'pmon:<i>' (same/next month). */
+function ddDef(id){
+  if (DD[id]) return DD[id];
+  const [kind, si] = id.split(':'), i = Number(si), p = PAY.periods[i], n = PAY.periods.length;
+  const set = (f,v)=>{ p[f]=v; save('payDays'); render(); };
+  if (kind==='pend'){
+    const min = i ? PAY.periods[i-1].end+1 : 1, max = PAY_END_MAX-(n-2-i);
+    return { value:()=>p.end, pick:v=>set('end',v),
+      items:()=>Array.from({length:max-min+1},(_,k)=>({v:min+k, label:t('pp_until', min+k)})) };
+  }
+  if (kind==='pday') return { value:()=>p.day, pick:v=>set('day',v),
+    items:()=>Array.from({length:31},(_,k)=>({v:k+1, label:String(k+1), sub:k===30?t('pp_last'):''})) };
+  return { value:()=>p.month, pick:v=>set('month',v),
+    items:()=>[{v:0, label:t('pm_same')}, {v:1, label:t('pm_next')}] };
+}
+function setPayCount(n){
+  if (n===PAY.periods.length) return;
+  PAY = defaultPay(n); save('payDays'); render();
+}
 function ddTrigger(id, inner, small){
   return '<button class="dd-btn'+(small?' sm':'')+'" data-dd="'+id+'" onclick="toggleDD(\''+id+'\', this)" aria-haspopup="listbox">'+inner+'<span class="chev">'+ICONS.updown+'</span></button>';
 }
 function toggleDD(id, el){
   if (ddOpen && ddOpen.id===id){ closeDD(); return; }
-  const def = DD[id], items = def.items(), cur = def.value();
+  const def = ddDef(id), items = def.items(), cur = def.value();
   ddOpen = {id, items, idx: Math.max(0, items.findIndex(x=>x.v===cur)), anchor: el};
   const root = document.getElementById('popover-root');
   root.innerHTML = '<div class="pop" role="listbox" id="pop" style="visibility:hidden">'+items.map((it,i)=>
@@ -1178,7 +1237,7 @@ function ddHover(i){
 }
 function ddPick(i){
   if (!ddOpen) return;
-  const def = DD[ddOpen.id], it = ddOpen.items[i];
+  const def = ddDef(ddOpen.id), it = ddOpen.items[i];
   closeDD();
   if (it && it.v!==def.value()) def.pick(it.v);
 }
@@ -1227,6 +1286,7 @@ function renderSettings(){
     '<div class="row-text"><div class="row-label">'+label+'</div>'+(sub?'<div class="row-sub">'+sub+'</div>':'')+'</div>'+
     '<div class="row-ctl">'+ctl+'</div></div>';
   const themeSeg = '<div class="seg">'+['system','light','dark'].map(th=>'<button class="'+(THEME===th?'on':'')+'" onclick="setTheme(\''+th+'\')">'+t('th_'+th)+'</button>').join('')+'</div>';
+  const countSeg = '<div class="seg">'+[1,2,3,4].map(n=>'<button class="num'+(PAY.periods.length===n?' on':'')+'" onclick="setPayCount('+n+')">'+n+'</button>').join('')+'</div>';
   let host = SUPABASE_URL; try { host = new URL(SUPABASE_URL).host; } catch(e){}
 
   return '<div class="page narrow">'+
@@ -1240,8 +1300,17 @@ function renderSettings(){
         '<div class="affix"><input class="input num" type="number" min="0" step="any" value="'+esc(RATE)+'" oninput="setPayRate(this.value)"><em>'+perHour()+'</em></div>')+
       row('percent','#ff3b30', t('set_tax'), t('set_tax_note'),
         '<div class="affix"><input class="input num" type="number" min="0" max="99" step="any" value="'+esc(taxPct())+'" oninput="setTaxPct(this.value)"><em>%</em></div>')+
-      row('cal','#af52de', t('set_pay1'), t('set_pay1_note'), ddTrigger('pay1', '<span class="num">'+PAYDAYS.first+'</span>', true))+
-      row('cal','#32ade6', t('set_pay2'), t('set_pay2_note'), ddTrigger('pay2', '<span class="num">'+PAYDAYS.second+'</span>', true))+
+      row('cal','#5e5ce6', t('set_pcount'), t('set_pcount_note'), countSeg)+
+    '</div>'+
+    '<div class="group-title">'+t('set_payouts')+'</div><div class="group">'+
+      payPeriods().map(r=>{
+        const last = r.i===PAY.periods.length-1;
+        const range = PAY.periods.length===1 ? t('pp_whole') : last ? t('pp_range_end', r.from) : t('pp_range', r.from, r.to);
+        return row('cal', PAY_TILES[r.i], t('pp_for', range), t(r.p.month ? 'pp_on_next' : 'pp_on_same', r.p.day),
+          '<div class="pay-ctl">'+(last ? '<span class="dd-btn sm dd-static">'+t('pp_until_end')+'</span>' : ddTrigger('pend:'+r.i, '<span class="num">'+t('pp_until', r.p.end)+'</span>', true))+
+          ddTrigger('pday:'+r.i, '<span class="num">'+r.p.day+'</span>', true)+
+          ddTrigger('pmon:'+r.i, '<span>'+t(r.p.month ? 'pm_next' : 'pm_same')+'</span>', true)+'</div>');
+      }).join('')+
     '</div>'+
     '<div class="group-title">'+t('set_backup')+'</div><div class="group">'+
       row('down','#34c759', t('set_export'), t('set_export_note'), '<button class="btn btn-secondary btn-sm" onclick="exportAllData()">'+t('btn_export')+'</button>')+
