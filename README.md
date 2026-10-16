@@ -2,8 +2,9 @@
 
 Log the hours you worked, see how much you'll get paid.
 
-One to four payouts a month with your own periods and paydays, a monthly
-goal, a shift planner with breaks, and a read-only lock on past months.
+Any pay schedule: payouts on your own dates (from once to 31 times a
+month) or every N days (daily, weekly, every two weeks). A monthly goal, a
+shift planner with breaks, and a read-only lock on past months.
 Light and dark mode, six languages (English, German, Spanish, French,
 Russian, Ukrainian), any currency.
 
@@ -97,7 +98,7 @@ The first `npm install` takes a minute or two. After that, `npm start` is
 enough.
 
 Open **Settings** to pick your language, currency, theme, hourly rate, tax
-and how your month is split into payouts.
+and pay schedule.
 
 ### 7. Optional: build a real app
 

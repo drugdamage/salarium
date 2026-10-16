@@ -101,6 +101,19 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .mac .topbar button{-webkit-app-region:no-drag;}
 .title{font-size:22px;font-weight:700;letter-spacing:-.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .title span{color:var(--text3);font-weight:600;}
+.title-btn{display:inline-flex;align-items:center;gap:6px;min-width:0;padding:3px 8px;margin-left:-8px;border-radius:9px;transition:background .12s;}
+.title-btn:hover{background:var(--fill);}
+.title-btn .chev{display:inline-flex;width:16px;height:16px;color:var(--text3);}
+.title-btn .chev svg{width:16px;height:16px;}
+.mp{min-width:0;width:252px;padding:8px;}
+.mp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.mp-head b{font-size:14px;font-weight:650;}
+.mp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
+.mp-grid button{height:34px;border-radius:8px;font-size:13px;font-weight:550;}
+.mp-grid button:hover{background:var(--fill);}
+.mp-grid button.now{color:var(--accent-text);box-shadow:inset 0 0 0 1.5px var(--accent);}
+.mp-grid button.sel{background:var(--accent);color:#fff;box-shadow:none;}
+.mp-now{display:block;margin:8px auto 2px;}
 .month-nav{display:flex;align-items:center;gap:6px;}
 .content{flex:1;overflow-y:auto;padding:4px 32px 40px;}
 .page{max-width:1060px;margin:0 auto;}
@@ -150,9 +163,19 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 /* ══════════════ WORK ══════════════ */
 .summary{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:14px;}
 .summary.n1{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);}
-.summary.n3{grid-template-columns:repeat(3,minmax(0,1fr));}
-.summary.n4{grid-template-columns:repeat(4,minmax(0,1fr));}
-.summary.n3 .hero,.summary.n4 .hero{grid-column:1/-1;}
+.po-list{max-height:330px;overflow-y:auto;margin:-6px -4px -4px;}
+.po-row{display:flex;align-items:center;gap:10px;padding:8px 4px;}
+.po-row+.po-row{border-top:1px solid var(--line);}
+.po-main{flex:1;min-width:0;}
+.po-range{font-size:13px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.po-meta{font-size:11.5px;color:var(--text2);margin-top:1px;}
+.po-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.po-right b{font-size:13.5px;font-weight:650;}
+.po-right b.zero{color:var(--text3);}
+.po-when{font-size:11.5px;color:var(--text2);white-space:nowrap;}
+.po-when.soon{color:var(--amber-text);}
+.po-when.done{color:var(--green-text);}
+.count{font-size:12px;font-weight:600;color:var(--text2);background:var(--fill);border-radius:999px;padding:1px 8px;}
 .hero{position:relative;overflow:hidden;border-radius:16px;padding:20px 22px;color:#fff;background:linear-gradient(135deg,#1b8cff 0%,#0a6ce0 55%,#0757c2 100%);box-shadow:0 6px 24px rgba(10,108,224,.25);}
 .hero-art{position:absolute;right:-26px;top:-18px;width:150px;opacity:.16;pointer-events:none;}
 .hero-label{font-size:12.5px;font-weight:600;opacity:.85;}
@@ -266,6 +289,15 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .pay-ctl .dd-btn{min-width:0;}
 .pay-ctl .dd-btn{white-space:nowrap;overflow:hidden;}
 .pay-ctl .dd-btn>span:not(.chev){overflow:hidden;text-overflow:ellipsis;}
+.stepper{display:flex;align-items:center;gap:4px;background:var(--fill);border-radius:9px;padding:2px;}
+.stepper b{min-width:28px;text-align:center;font-size:14px;font-weight:650;}
+.stepper .icon-btn:disabled{opacity:.35;pointer-events:none;}
+.stepper .icon-btn:hover{background:var(--seg-on);}
+.date-in{width:150px;}
+.row-sub .warn{color:var(--amber-text);}
+.up-row{min-height:44px;}
+.up-row .row-text{font-size:13.5px;font-weight:550;}
+.up-date{font-size:13px;color:var(--text2);}
 .dd-btn .chev{margin-left:auto;width:15px;height:15px;color:var(--text2);}
 .flag{width:21px;height:14px;border-radius:3px;overflow:hidden;flex-shrink:0;position:relative;box-shadow:0 0 0 .5px rgba(0,0,0,.18);}
 .flag svg{width:100%;height:100%;}
@@ -340,8 +372,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 
 /* ══════════════ RESPONSIVE ══════════════ */
 @media (max-width:1040px){
-  .summary,.summary.n4{grid-template-columns:1fr 1fr;}
-  .summary.n3{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .summary{grid-template-columns:1fr 1fr;}
   .hero{grid-column:1/-1;}
   .summary.n1 .hero{grid-column:auto;}
   .summary.n1{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);}
@@ -425,7 +456,7 @@ let TAB = 'work';
 const now0 = new Date();
 let Y = now0.getFullYear(), Mo = now0.getMonth();
 let LOAD = CONFIG_OK ? 'loading' : 'config', LOAD_ERR = '';
-let RATE = 220, TAX = 0.87, CUR = 'RUB', PAY = defaultPay(2);
+let RATE = 220, TAX = 0.87, CUR = 'RUB', PAY = null; /* set from payDays on load */
 let workData = {}, workSettings = {}, holidayAdj = {}, overtimeRate = {};
 let scheduleHours = {weekdayFrom:'06:00', weekdayTo:'21:00', weekendFrom:'09:00', weekendTo:'18:00'}, dayHours = {};
 let workEditUnlocked = {}, breakDay = 'weekday';
@@ -509,7 +540,8 @@ function monthName(mo){ return cap(fmt('d:month',{month:'long'}).format(new Date
 function dayNames(){ return [1,2,3,4,5,6,7].map(d=>cap(fmt('d:wd',{weekday:'short'}).format(new Date(2024,0,d)).replace('.',''))); }
 function shortDate(date){ return fmt('d:short',{day:'numeric',month:'short'}).format(date); }
 function longDate(date){ return cap(fmt('d:long',{weekday:'long',day:'numeric',month:'long'}).format(date)); }
-function periodLabel(from,to){ return fmt('d:range',{day:'numeric',month:'long'}).formatRange(new Date(Y,Mo,from), new Date(Y,Mo,to)); }
+function periodLabel(from,to){ return fmt('d:range',{day:'numeric',month:'long'}).formatRange(from, to); }
+function periodShort(from,to){ return fmt('d:rangeS',{day:'numeric',month:'short'}).formatRange(from, to); }
 function relDays(n){ return fmt('r:day',{numeric:'auto'}).format(n,'day'); }
 function hrsFmt(h){
   const hh=Math.floor(Math.abs(h)), mm=Math.round((Math.abs(h)-hh)*60);
@@ -565,6 +597,8 @@ const ICONS = {
   cash: ic('<rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/>'),
   percent: ic('<path d="M18 6L6 18"/><circle cx="7.5" cy="7.5" r="2.2"/><circle cx="16.5" cy="16.5" r="2.2"/>'),
   cal: ic('<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'),
+  plus: ic('<path d="M12 5v14M5 12h14"/>'),
+  minus: ic('<path d="M5 12h14"/>'),
   down: ic('<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/>'),
   up: ic('<path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 19.5h14"/>'),
   code: ic('<path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5"/>'),
@@ -586,22 +620,23 @@ const tile = (icon, color) => '<span class="row-icon" style="background:'+color+
 function flagHtml(code){ return '<span class="flag">'+(FLAGS[code]||'')+'</span>'; }
 
 /* ══════════════ PAY SCHEDULE ══════════════ */
-/* The month is split into 1–4 periods. Every period but the last ends on a
-   fixed day (≤27, so even February has room for the rest); the last one runs
-   to the end of the month. Each period is paid on a day of the same or next month. */
-const PAY_MAX = 4, PAY_END_MAX = 27;
+/* Two ways to get paid:
+   - 'dates': the month is split into 1–31 periods by day of the month. Every
+     period but the last ends on a set day; the last one runs to the end of the
+     month. Each period is paid on a day of the same or the next month.
+   - 'cycle': every N days counted from a start date (daily, weekly, every two
+     weeks…), paid a set number of days after the period ends. */
+const PAY_LAST_END = 30, CYCLE_MAX = 60;
 const PAY_COLORS = ['var(--accent)','var(--green)','var(--purple)','var(--amber)'];
 const PAY_TILES = ['#0a84ff','#34c759','#af52de','#ff9500'];
-function defaultPay(n){
-  const ends = {1:[], 2:[15], 3:[10,20], 4:[7,14,21]}[n];
-  return {periods: Array.from({length:n}, (_,i)=>{
-    const e = i<n-1 ? ends[i] : 30, day = e+9;
-    return Object.assign(i<n-1 ? {end:e} : {}, day<=31 ? {day, month:0} : {day:Math.max(1, day-30), month:1});
-  })};
+/* Suggested payday for a period that ends on day `end`: nine days later. */
+function payFor(end){ const day = end+9; return day<=31 ? {day, month:0} : {day:day-30, month:1}; }
+function defaultPay(){
+  return { mode:'dates', periods:[Object.assign({end:15}, payFor(15)), payFor(PAY_LAST_END)],
+    cycle:{len:7, start:'2024-01-01', delay:5} };
 }
-function cleanPay(v){
-  const ps = v && Array.isArray(v.periods) ? v.periods : null;
-  if (!ps || !ps.length || ps.length>PAY_MAX) return null;
+function cleanPeriods(ps){
+  if (!Array.isArray(ps) || !ps.length || ps.length>31) return null;
   let prev = 0;
   const out = [];
   for (let i=0; i<ps.length; i++){
@@ -610,17 +645,70 @@ function cleanPay(v){
     const p = {day, month};
     if (i<ps.length-1){
       const end = Number(ps[i].end);
-      if (!(end>prev && end<=PAY_END_MAX-(ps.length-2-i))) return null;
+      if (!(end>prev && end<=PAY_LAST_END)) return null;
       p.end = prev = end;
     }
     out.push(p);
   }
-  return {periods:out};
+  return out;
 }
-function payPeriods(){
-  const d = dim(Y,Mo), n = PAY.periods.length;
+function cleanCycle(c){
+  if (!c) return null;
+  const len = Number(c.len), delay = Number(c.delay);
+  if (!(Number.isInteger(len) && len>=1 && len<=CYCLE_MAX) || !(Number.isInteger(delay) && delay>=0 && delay<=CYCLE_MAX)) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(c.start) || isNaN(parseDay(c.start))) return null;
+  return {len, start:c.start, delay};
+}
+function cleanPay(v){
+  const def = defaultPay();
+  if (!v || typeof v!=='object') return def;
+  if (v.first && v.second) v = {periods:[{end:15, day:v.first, month:0}, {day:v.second, month:1}]}; /* format before 2.2 */
+  return { mode: v.mode==='cycle' ? 'cycle' : 'dates',
+    periods: cleanPeriods(v.periods) || def.periods,
+    cycle: cleanCycle(v.cycle) || def.cycle };
+}
+function addDays(date, n){ return new Date(date.getFullYear(), date.getMonth(), date.getDate()+n); }
+function dayDiff(a, b){ return Math.round((a-b)/86400000); }
+function parseDay(str){ const [y,m,d] = str.split('-').map(Number); return new Date(y, m-1, d); }
+/* Pay periods that overlap month y/mo, as {i, from, to, pay} dates (+ p, the period setting, in 'dates' mode). */
+function payoutsFor(y, mo){
+  const first = new Date(y,mo,1), d = dim(y,mo), out = [];
+  if (PAY.mode==='cycle'){
+    const c = PAY.cycle, a = parseDay(c.start);
+    const k0 = Math.floor(dayDiff(first,a)/c.len), k1 = Math.floor(dayDiff(new Date(y,mo,d),a)/c.len);
+    for (let k=k0; k<=k1; k++){
+      const from = addDays(a, k*c.len), to = addDays(from, c.len-1);
+      out.push({i:k-k0, from, to, pay:addDays(to, c.delay)});
+    }
+    return out;
+  }
+  let start = 1;
+  PAY.periods.forEach((p,i)=>{
+    const end = i===PAY.periods.length-1 ? d : Math.min(p.end, d);
+    if (start<=end){
+      const pm = new Date(y, mo+p.month, 1), py = pm.getFullYear(), pmo = pm.getMonth();
+      out.push({i, p, from:new Date(y,mo,start), to:new Date(y,mo,end), pay:new Date(py, pmo, Math.min(p.day, dim(py,pmo)))});
+    }
+    start = Math.max(start, end+1);
+  });
+  return out;
+}
+/* Payouts whose payday falls in month y/mo (they can come from earlier months). */
+function paydaysIn(y, mo){
+  const seen = {}, out = [];
+  [-2,-1,0].forEach(off=>{
+    const m = new Date(y, mo+off, 1);
+    payoutsFor(m.getFullYear(), m.getMonth()).forEach(r=>{
+      if (r.pay.getFullYear()!==y || r.pay.getMonth()!==mo || seen[r.from.getTime()]) return;
+      seen[r.from.getTime()] = 1; out.push(r);
+    });
+  });
+  return out;
+}
+/* Settings view of the 'dates' periods, by nominal day (the last one ends on the 31st). */
+function dateRows(){
   let from = 1;
-  return PAY.periods.map((p,i)=>{ const to = i===n-1 ? d : p.end, r = {i, p, from, to}; from = to+1; return r; });
+  return PAY.periods.map((p,i)=>{ const last = i===PAY.periods.length-1, r = {i, p, from, last, to:last ? 31 : p.end}; from = r.to+1; return r; });
 }
 
 /* ══════════════ HELPERS ══════════════ */
@@ -640,13 +728,12 @@ function holidayHourAdj(entry){
   if (entry.type==='shortened') return -(Number(entry.hours)||0);
   return 0; /* holiday: non-working marker, does not reduce the hours goal */
 }
-function calcPeriod(from,to){
+function calcRange(from, to){
   let h=0, gross=0;
-  for(let d=from; d<=to; d++){
-    const hrs=parseTime(workData[wKey(d)]);
-    h+=hrs;
-    const rate = overtimeRate[wKey(d)] ? Number(overtimeRate[wKey(d)]) : RATE;
-    gross += hrs*rate;
+  for (let dt=from; dt<=to; dt=addDays(dt,1)){
+    const k = keyFor(dt.getFullYear(), dt.getMonth(), dt.getDate()), hrs = parseTime(workData[k]);
+    h += hrs;
+    gross += hrs*(overtimeRate[k] ? Number(overtimeRate[k]) : RATE);
   }
   return {h, gross, net:gross*TAX};
 }
@@ -663,10 +750,6 @@ function computeHoursStatusFor(y,mo){
     if (holidayAdj[dk]) target += holidayHourAdj(holidayAdj[dk]);
   }
   return {target, actual, remaining: target-actual};
-}
-function payDate(p){
-  const m = new Date(Y, Mo+(p.month||0), 1), ny = m.getFullYear(), nm = m.getMonth();
-  return new Date(ny, nm, Math.min(p.day, dim(ny,nm)));
 }
 function canEditMonth(){ return !isPastMonth(Y,Mo) || !!workEditUnlocked[mKey(Y,Mo)]; }
 
@@ -801,9 +884,7 @@ async function init(){
   RATE = typeof raw.payRate==='number' && raw.payRate>0 ? raw.payRate : 220;
   TAX = typeof raw.payTax==='number' && raw.payTax>=0 && raw.payTax<=1 ? raw.payTax : 0.87;
   CUR = typeof raw.currency==='string' && /^[A-Z]{3}$/.test(raw.currency) ? raw.currency : 'RUB';
-  const pd = raw.payDays;
-  if (pd && pd.first && pd.second) PAY = cleanPay({periods:[{end:15, day:pd.first, month:0}, {day:pd.second, month:1}]}) || defaultPay(2);
-  else PAY = cleanPay(pd) || defaultPay(2);
+  PAY = cleanPay(raw.payDays);
   workData = raw.workData || {};
   workSettings = raw.workSettings || {};
   holidayAdj = raw.holidayAdj || {};
@@ -837,10 +918,10 @@ function renderTopbar(){
   const monthly = (TAB==='work' || TAB==='planner') && LOAD==='ok';
   const width = TAB==='settings' ? 640 : TAB==='about' ? 760 : 1060;
   document.getElementById('topbar').innerHTML = '<div class="topbar-inner" style="max-width:'+width+'px">'+(monthly
-    ? '<div class="title">'+monthName(Mo)+' <span>'+Y+'</span></div>'+
+    ? '<button class="title title-btn" onclick="toggleMonthPicker(this)" title="'+esc(t('pick_month'))+'">'+monthName(Mo)+' <span>'+Y+'</span><i class="chev">'+ICONS.updown+'</i></button>'+
       '<div class="month-nav">'+
+        (isCurrentMonth() ? '' : '<button class="btn btn-secondary btn-sm" onclick="goToday()">'+t('to_current')+'</button>')+
         '<button class="icon-btn" onclick="prevMo()" title="'+esc(t('prev'))+'">'+ICONS.left+'</button>'+
-        '<button class="btn btn-secondary btn-sm" onclick="goToday()">'+t('today')+'</button>'+
         '<button class="icon-btn" onclick="nextMo()" title="'+esc(t('next'))+'">'+ICONS.right+'</button>'+
       '</div>'
     : '<div class="title">'+t('nav_'+TAB)+'</div>')+'</div>';
@@ -849,6 +930,31 @@ function setTab(tb){ TAB=tb; closeDD(); render(); document.getElementById('conte
 function prevMo(){ if(Mo===0){Y--;Mo=11;} else Mo--; render(); }
 function nextMo(){ if(Mo===11){Y++;Mo=0;} else Mo++; render(); }
 function goToday(){ const d=new Date(); Y=d.getFullYear(); Mo=d.getMonth(); render(); }
+function isCurrentMonth(){ const d=new Date(); return Y===d.getFullYear() && Mo===d.getMonth(); }
+
+/* Month picker: click the month title to jump to any month and year. */
+let mp = null;
+function toggleMonthPicker(el){
+  if (mp){ closeDD(); return; }
+  closeDD();
+  mp = {y:Y, anchor:el};
+  renderMonthPicker();
+}
+function renderMonthPicker(){
+  const now = new Date();
+  document.getElementById('popover-root').innerHTML = '<div class="pop mp" id="pop">'+
+    '<div class="mp-head"><button class="icon-btn" onclick="mpYear(-1)" title="'+esc(t('prev'))+'">'+ICONS.left+'</button><b class="num">'+mp.y+'</b>'+
+      '<button class="icon-btn" onclick="mpYear(1)" title="'+esc(t('next'))+'">'+ICONS.right+'</button></div>'+
+    '<div class="mp-grid">'+Array.from({length:12}, (_,m)=>{
+      const cls = [mp.y===Y && m===Mo ? 'sel' : '', mp.y===now.getFullYear() && m===now.getMonth() ? 'now' : ''].filter(Boolean).join(' ');
+      return '<button class="'+cls+'" onclick="mpPick('+m+')">'+cap(fmt('d:mshort',{month:'short'}).format(new Date(2024,m,1)).replace('.',''))+'</button>';
+    }).join('')+'</div>'+
+    '<button class="btn-link mp-now" onclick="mpPick(-1)">'+t('to_current')+'</button></div>';
+  const pop = document.getElementById('pop'), r = mp.anchor.getBoundingClientRect();
+  pop.style.left = Math.max(8, r.left)+'px'; pop.style.top = (r.bottom+6)+'px';
+}
+function mpYear(n){ mp.y += n; renderMonthPicker(); }
+function mpPick(m){ if (m<0) goToday(); else { Y = mp.y; Mo = m; render(); } }
 
 const content = document.getElementById('content');
 content.addEventListener('focusout', e=>{ if (e.target.matches('input')) setTimeout(render, 0); });
@@ -885,8 +991,8 @@ function toggleWorkEdit(){ const k=mKey(Y,Mo); workEditUnlocked[k]=!workEditUnlo
 function renderWork(){
   const k = mKey(Y,Mo), isPast = isPastMonth(Y,Mo), canEdit = canEditMonth();
   const d = dim(Y,Mo), fw = firstWd(Y,Mo);
-  const periods = payPeriods().map(r=>Object.assign(r, {calc:calcPeriod(r.from, r.to)}));
-  const tot = periods.reduce((a,r)=>({h:a.h+r.calc.h, gross:a.gross+r.calc.gross, net:a.net+r.calc.net}), {h:0, gross:0, net:0});
+  const pays = payoutsFor(Y,Mo).map(r=>Object.assign(r, {calc:calcRange(r.from, r.to)}));
+  const tot = calcRange(new Date(Y,Mo,1), new Date(Y,Mo,d));
   const ws = workSettings[k] || {};
   const perShift = Number(ws.hoursPerShift)||0;
   const hs = computeHoursStatusFor(Y,Mo);
@@ -905,14 +1011,25 @@ function renderWork(){
     '<div class="hero-sub num">'+t('before_tax', money(tot.gross))+' · '+t('worked', hrsFmt(tot.h))+'</div>'+
     progress+'</div>';
 
-  const payout = (label, p, date, color) => {
-    const diff = daysTo(date);
-    const chip = diff<0 ? '<span class="chip done">'+ICONS.check+t('paid_on', shortDate(date))+'</span>'
-      : '<span class="chip'+(diff<=3?' soon':'')+'">'+t('payout_in', diff<=30 ? relDays(diff) : shortDate(date))+'</span>';
-    return '<div class="card payout"><div class="payout-head"><span class="dot" style="background:'+color+'"></span>'+label+'</div>'+
+  const when = date => { const diff = daysTo(date); return diff<0 ? t('paid_on', shortDate(date)) : t('payout_in', diff<=30 ? relDays(diff) : shortDate(date)); };
+  const whenCls = date => { const diff = daysTo(date); return diff<0 ? ' done' : diff<=3 ? ' soon' : ''; };
+  const payout = (r, head) => {
+    const p = r.calc;
+    return '<div class="card payout"><div class="payout-head"><span class="dot" style="background:'+PAY_COLORS[r.i%4]+'"></span>'+(head ? head+' · ' : '')+periodLabel(r.from, r.to)+'</div>'+
       '<div class="payout-amount num'+(p.net===0?' zero':'')+'">'+money(p.net)+'</div>'+
-      '<div class="payout-meta num">'+(p.h>0 ? hrsFmt(p.h)+' · '+t('before_tax', money(p.gross)) : t('no_hours'))+'</div>'+chip+'</div>';
+      '<div class="payout-meta num">'+(p.h>0 ? hrsFmt(p.h)+' · '+t('before_tax', money(p.gross)) : t('no_hours'))+'</div>'+
+      '<span class="chip'+whenCls(r.pay)+'">'+(daysTo(r.pay)<0 ? ICONS.check : '')+when(r.pay)+'</span></div>';
   };
+  /* Up to two payouts get their own cards; with more, the next one gets a card and all of them go in a list. */
+  const many = pays.length>2, next = pays.find(r=>daysTo(r.pay)>=0);
+  const cards = many ? payout(next || pays[pays.length-1], t(next ? 'po_next' : 'po_last')) : pays.map(r=>payout(r)).join('');
+  const payList = many ? '<div class="card"><div class="card-title">'+t('po_list')+'<span class="count num">'+pays.length+'</span></div><div class="po-list">'+
+    pays.map(r=>'<div class="po-row"><span class="dot" style="background:'+PAY_COLORS[r.i%4]+'"></span>'+
+      '<div class="po-main"><div class="po-range">'+periodShort(r.from, r.to)+'</div><div class="po-meta num">'+(r.calc.h>0 ? hrsFmt(r.calc.h) : t('no_hours'))+'</div></div>'+
+      '<div class="po-right"><b class="num'+(r.calc.net===0?' zero':'')+'">'+money(r.calc.net)+'</b><span class="po-when'+whenCls(r.pay)+'">'+when(r.pay)+'</span></div></div>').join('')+
+    '</div></div>' : '';
+  const payMarks = {};
+  paydaysIn(Y,Mo).forEach(r=>{ const n = r.pay.getDate(); payMarks[n] = (payMarks[n]||0) + calcRange(r.from, r.to).net; });
 
   /* calendar */
   const cells = [...Array(fw).fill(null), ...Array.from({length:d},(_,i)=>i+1)];
@@ -922,10 +1039,12 @@ function renderWork(){
     if (!n) return '<div class="day empty"></div>';
     const dk = wKey(n), time = workData[dk], adj = holidayAdj[dk], ot = overtimeRate[dk];
     const cls = ['day', isTodayCell(n)?'today':'', time?'worked':'', adj&&adj.type==='holiday'?'hol':'', i%7===6?'sun':'', canEdit?'':'ro'].filter(Boolean).join(' ');
-    const marks = (adj ? '<i style="background:'+(adj.type==='holiday'?'var(--red)':'var(--amber)')+'"></i>' : '')+(ot ? '<i style="background:var(--purple)"></i>' : '');
+    const pm = payMarks[n];
+    const marks = (adj ? '<i style="background:'+(adj.type==='holiday'?'var(--red)':'var(--amber)')+'"></i>' : '')+(ot ? '<i style="background:var(--purple)"></i>' : '')+(pm!==undefined ? '<i style="background:var(--green)"></i>' : '');
     const tips = [time ? hrsFmt(parseTime(time)) : resolvedHoursForDay(Y,Mo,n)];
     if (adj) tips.push(adj.type==='holiday' ? t('tip_holiday') : t('tip_short', hrsFmt(Number(adj.hours)||0)));
     if (ot) tips.push(t('tip_extra', moneyExact(Number(ot))+'/'+t('h_unit')));
+    if (pm!==undefined) tips.push(t('tip_payday', money(pm)));
     return '<div class="'+cls+'"'+(canEdit?' onclick="openDay('+n+')"':'')+' title="'+esc(tips.join(' · '))+'">'+
       '<span class="n">'+n+'</span>'+(marks?'<span class="mks">'+marks+'</span>':'')+
       (time?'<span class="h num">'+cellTime(time)+'</span>':'')+'</div>';
@@ -938,6 +1057,7 @@ function renderWork(){
     '<span><i class="dot" style="background:var(--red)"></i>'+t('lg_holiday')+'</span>'+
     '<span><i class="dot" style="background:var(--amber)"></i>'+t('lg_short')+'</span>'+
     '<span><i class="dot" style="background:var(--purple)"></i>'+t('lg_extra')+'</span>'+
+    '<span><i class="dot" style="background:var(--green)"></i>'+t('lg_payday')+'</span>'+
     (canEdit ? '<span class="hint">'+t('cal_hint')+'</span>' : '')+'</div>';
   const calendar = '<div class="card">'+lockbar+'<div class="cal-head">'+head+'</div><div class="cal">'+grid+'</div>'+legend+'</div>';
 
@@ -958,9 +1078,8 @@ function renderWork(){
     '<div class="stat"><span>'+t('st_tax')+'</span><b class="num">'+taxPct()+'%</b></div></div>';
 
   return '<div class="page">'+
-    '<div class="summary n'+periods.length+'">'+hero+
-      periods.map(r=>payout(periodLabel(r.from, r.to), r.calc, payDate(r.p), PAY_COLORS[r.i])).join('')+'</div>'+
-    '<div class="work-grid">'+calendar+'<div class="side">'+goal+stats+'</div></div>'+
+    '<div class="summary n'+(many ? 1 : pays.length)+'">'+hero+cards+'</div>'+
+    '<div class="work-grid">'+calendar+'<div class="side">'+payList+goal+stats+'</div></div>'+
     '</div>';
 }
 
@@ -1197,7 +1316,7 @@ function ddDef(id){
   const [kind, si] = id.split(':'), i = Number(si), p = PAY.periods[i], n = PAY.periods.length;
   const set = (f,v)=>{ p[f]=v; save('payDays'); render(); };
   if (kind==='pend'){
-    const min = i ? PAY.periods[i-1].end+1 : 1, max = PAY_END_MAX-(n-2-i);
+    const min = i ? PAY.periods[i-1].end+1 : 1, max = PAY_LAST_END-(n-2-i);
     return { value:()=>p.end, pick:v=>set('end',v),
       items:()=>Array.from({length:max-min+1},(_,k)=>({v:min+k, label:t('pp_until', min+k)})) };
   }
@@ -1206,16 +1325,43 @@ function ddDef(id){
   return { value:()=>p.month, pick:v=>set('month',v),
     items:()=>[{v:0, label:t('pm_same')}, {v:1, label:t('pm_next')}] };
 }
+function setPayMode(m){ if (PAY.mode===m) return; PAY.mode = m; save('payDays'); render(); }
+/* Splits the month evenly into n payouts; each one can be adjusted after. */
 function setPayCount(n){
-  if (n===PAY.periods.length) return;
-  PAY = defaultPay(n); save('payDays'); render();
+  if (n<1 || n>31 || n===PAY.periods.length) return;
+  PAY.periods = Array.from({length:n}, (_,i)=>{
+    if (i===n-1) return payFor(PAY_LAST_END);
+    const end = Math.floor(31*(i+1)/n);
+    return Object.assign({end}, payFor(end));
+  });
+  save('payDays'); render();
 }
+/* Its days go to the next period (or the previous one, for the last). */
+function delPeriod(i){
+  const ps = PAY.periods;
+  if (ps.length<2) return;
+  ps.splice(i, 1);
+  delete ps[ps.length-1].end;
+  save('payDays'); render();
+}
+function setCycle(f, v){
+  const c = PAY.cycle;
+  if (f==='start'){
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
+    c.start = v; save('payDays'); render(); return;
+  }
+  const n = Number(v);
+  if (v==='' || !Number.isInteger(n) || n<(f==='len' ? 1 : 0) || n>CYCLE_MAX) return;
+  c[f] = n; saveLater('payDays', 500);
+}
+function setCycleLen(n){ PAY.cycle.len = n; save('payDays'); render(); }
 function ddTrigger(id, inner, small){
   return '<button class="dd-btn'+(small?' sm':'')+'" data-dd="'+id+'" onclick="toggleDD(\''+id+'\', this)" aria-haspopup="listbox">'+inner+'<span class="chev">'+ICONS.updown+'</span></button>';
 }
 function toggleDD(id, el){
   if (ddOpen && ddOpen.id===id){ closeDD(); return; }
   const def = ddDef(id), items = def.items(), cur = def.value();
+  mp = null;
   ddOpen = {id, items, idx: Math.max(0, items.findIndex(x=>x.v===cur)), anchor: el};
   const root = document.getElementById('popover-root');
   root.innerHTML = '<div class="pop" role="listbox" id="pop" style="visibility:hidden">'+items.map((it,i)=>
@@ -1241,9 +1387,9 @@ function ddPick(i){
   closeDD();
   if (it && it.v!==def.value()) def.pick(it.v);
 }
-function closeDD(){ if (!ddOpen) return; ddOpen=null; document.getElementById('popover-root').innerHTML=''; }
+function closeDD(){ if (!ddOpen && !mp) return; ddOpen=null; mp=null; document.getElementById('popover-root').innerHTML=''; }
 document.addEventListener('mousedown', e=>{
-  if (ddOpen && !e.target.closest('.pop') && !e.target.closest('.dd-btn')) closeDD();
+  if ((ddOpen || mp) && !e.target.closest('.pop') && !e.target.closest('.dd-btn') && !e.target.closest('.title-btn')) closeDD();
 });
 
 function setPayRate(val){
@@ -1286,7 +1432,38 @@ function renderSettings(){
     '<div class="row-text"><div class="row-label">'+label+'</div>'+(sub?'<div class="row-sub">'+sub+'</div>':'')+'</div>'+
     '<div class="row-ctl">'+ctl+'</div></div>';
   const themeSeg = '<div class="seg">'+['system','light','dark'].map(th=>'<button class="'+(THEME===th?'on':'')+'" onclick="setTheme(\''+th+'\')">'+t('th_'+th)+'</button>').join('')+'</div>';
-  const countSeg = '<div class="seg">'+[1,2,3,4].map(n=>'<button class="num'+(PAY.periods.length===n?' on':'')+'" onclick="setPayCount('+n+')">'+n+'</button>').join('')+'</div>';
+  const modeSeg = '<div class="seg">'+['dates','cycle'].map(m=>'<button class="'+(PAY.mode===m?'on':'')+'" onclick="setPayMode(\''+m+'\')">'+t('pm_'+m)+'</button>').join('')+'</div>';
+  let payRows;
+  if (PAY.mode==='dates'){
+    const rows = dateRows(), n = rows.length;
+    const stepper = '<div class="stepper"><button class="icon-btn" onclick="setPayCount('+(n-1)+')"'+(n<2?' disabled':'')+'>'+ICONS.minus+'</button>'+
+      '<b class="num">'+n+'</b><button class="icon-btn" onclick="setPayCount('+(n+1)+')"'+(n>30?' disabled':'')+'>'+ICONS.plus+'</button></div>';
+    payRows = row('cal','#5e5ce6', t('pp_count'), t('pp_count_note'), stepper)+rows.map(r=>{
+      const range = n===1 ? t('pp_whole') : r.last ? t('pp_range_end', r.from) : t('pp_range', r.from, r.to);
+      const early = !r.p.month && r.p.day<r.to;
+      return row('cal', PAY_TILES[r.i%4], t('pp_for', range),
+        t(r.p.month ? 'pp_on_next' : 'pp_on_same', r.p.day)+(early ? ' · <span class="warn">'+t('pp_early')+'</span>' : ''),
+        '<div class="pay-ctl">'+(r.last ? '<span class="dd-btn sm dd-static">'+t('pp_until_end')+'</span>' : ddTrigger('pend:'+r.i, '<span class="num">'+t('pp_until', r.p.end)+'</span>', true))+
+        ddTrigger('pday:'+r.i, '<span class="num">'+r.p.day+'</span>', true)+
+        ddTrigger('pmon:'+r.i, '<span>'+t(r.p.month ? 'pm_next' : 'pm_same')+'</span>', true)+'</div>'+
+        (n>1 ? '<button class="icon-btn" onclick="delPeriod('+r.i+')" title="'+esc(t('pp_del'))+'">'+ICONS.close+'</button>' : ''));
+    }).join('');
+  } else {
+    const c = PAY.cycle;
+    const quick = '<div class="seg">'+[[1,'cy_daily'],[7,'cy_weekly'],[14,'cy_biweekly']].map(([n,k])=>'<button class="'+(c.len===n?'on':'')+'" onclick="setCycleLen('+n+')">'+t(k)+'</button>').join('')+'</div>';
+    const numIn = (f, min) => '<div class="affix"><input class="input num" type="number" min="'+min+'" max="'+CYCLE_MAX+'" step="1" value="'+c[f]+'" oninput="setCycle(\''+f+'\', this.value)"><em>'+t('d_unit')+'</em></div>';
+    payRows = row('target','#5e5ce6', t('cy_quick'), '', quick)+
+      row('clock','#0a84ff', t('cy_len'), t('cy_len_note'), numIn('len', 1))+
+      row('cal','#34c759', t('cy_start'), t('cy_start_note'), '<input class="input date-in" type="date" value="'+c.start+'" onchange="setCycle(\'start\', this.value)">')+
+      row('cash','#ff9500', t('cy_delay'), t('cy_delay_note'), numIn('delay', 0));
+  }
+  /* The next few payouts, so the schedule can be checked at a glance. */
+  const today = new Date(), today0 = new Date(today.getFullYear(), today.getMonth(), today.getDate()), seen = {};
+  const upcoming = [-1,0,1,2].flatMap(off=>{ const m = new Date(today.getFullYear(), today.getMonth()+off, 1); return payoutsFor(m.getFullYear(), m.getMonth()); })
+    .filter(r=>r.pay>=today0 && !seen[r.from.getTime()] && (seen[r.from.getTime()] = 1))
+    .sort((a,b)=>a.pay-b.pay).slice(0,4);
+  const upRows = upcoming.map(r=>'<div class="row up-row"><span class="dot" style="background:'+PAY_COLORS[r.i%4]+'"></span><div class="row-text">'+periodLabel(r.from, r.to)+'</div>'+
+    '<div class="row-ctl up-date num">'+cap(fmt('d:up',{weekday:'short',day:'numeric',month:'long'}).format(r.pay))+'</div></div>').join('');
   let host = SUPABASE_URL; try { host = new URL(SUPABASE_URL).host; } catch(e){}
 
   return '<div class="page narrow">'+
@@ -1300,18 +1477,10 @@ function renderSettings(){
         '<div class="affix"><input class="input num" type="number" min="0" step="any" value="'+esc(RATE)+'" oninput="setPayRate(this.value)"><em>'+perHour()+'</em></div>')+
       row('percent','#ff3b30', t('set_tax'), t('set_tax_note'),
         '<div class="affix"><input class="input num" type="number" min="0" max="99" step="any" value="'+esc(taxPct())+'" oninput="setTaxPct(this.value)"><em>%</em></div>')+
-      row('cal','#5e5ce6', t('set_pcount'), t('set_pcount_note'), countSeg)+
+      row('cal','#30b350', t('set_pmode'), t('set_pmode_note'), modeSeg)+
     '</div>'+
-    '<div class="group-title">'+t('set_payouts')+'</div><div class="group">'+
-      payPeriods().map(r=>{
-        const last = r.i===PAY.periods.length-1;
-        const range = PAY.periods.length===1 ? t('pp_whole') : last ? t('pp_range_end', r.from) : t('pp_range', r.from, r.to);
-        return row('cal', PAY_TILES[r.i], t('pp_for', range), t(r.p.month ? 'pp_on_next' : 'pp_on_same', r.p.day),
-          '<div class="pay-ctl">'+(last ? '<span class="dd-btn sm dd-static">'+t('pp_until_end')+'</span>' : ddTrigger('pend:'+r.i, '<span class="num">'+t('pp_until', r.p.end)+'</span>', true))+
-          ddTrigger('pday:'+r.i, '<span class="num">'+r.p.day+'</span>', true)+
-          ddTrigger('pmon:'+r.i, '<span>'+t(r.p.month ? 'pm_next' : 'pm_same')+'</span>', true)+'</div>');
-      }).join('')+
-    '</div>'+
+    '<div class="group-title">'+t('set_payouts')+'</div><div class="group">'+payRows+'</div>'+
+    '<div class="group-title">'+t('set_upcoming')+'</div><div class="group">'+upRows+'</div>'+
     '<div class="group-title">'+t('set_backup')+'</div><div class="group">'+
       row('down','#34c759', t('set_export'), t('set_export_note'), '<button class="btn btn-secondary btn-sm" onclick="exportAllData()">'+t('btn_export')+'</button>')+
       row('up','#ff9f0a', t('set_import'), t('set_import_note'), '<button class="btn btn-secondary btn-sm" onclick="importAllData()">'+t('btn_import')+'</button>')+
@@ -1340,6 +1509,10 @@ function renderAbout(){
 
 /* ══════════════ KEYBOARD ══════════════ */
 document.addEventListener('keydown', e=>{
+  if (mp){
+    if (e.key==='Escape'){ e.preventDefault(); closeDD(); }
+    return;
+  }
   if (ddOpen){
     const n = ddOpen.items.length;
     if (e.key==='ArrowDown' || e.key==='ArrowUp'){
