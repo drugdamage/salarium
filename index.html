@@ -57,6 +57,8 @@
 }
 
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;}
+:lang(zh) body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI Variable Text","Segoe UI","Microsoft YaHei",system-ui,sans-serif;}
+:lang(ja) body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Segoe UI Variable Text","Segoe UI","Yu Gothic UI","Meiryo",system-ui,sans-serif;}
 body{overflow:hidden;user-select:none;}
 input{user-select:text;}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;}
@@ -215,7 +217,9 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .day.hol{background:var(--red-soft);}
 .day.ro.worked:hover{background:var(--accent-soft);}
 .day.ro.hol:hover{background:var(--red-soft);}
-.day .h{font-size:12px;font-weight:650;color:var(--accent-text);}
+.day .h{font-size:12px;font-weight:650;color:var(--accent-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.day .h.off{color:var(--red-text);}
+.day .h.sh{color:var(--amber-text);}
 .day .mks{position:absolute;top:9px;right:9px;display:flex;gap:3px;}
 .day .mks i{width:7px;height:7px;border-radius:50%;}
 .legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--text2);}
@@ -247,6 +251,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .cal.compact .day.sug .n{color:var(--accent-text);}
 .cal.compact .day.today .n{color:#fff;}
 .cal.compact .day.hol{background:var(--red-soft);}
+.cal.compact .day .sd{position:absolute;top:7px;right:8px;width:5px;height:5px;border-radius:50%;background:var(--amber);}
 .cal.compact .day .wd{position:absolute;bottom:5px;left:50%;margin-left:-2px;width:4px;height:4px;border-radius:50%;background:var(--accent);}
 .pl-note{display:flex;gap:8px;align-items:flex-start;margin-top:14px;font-size:12px;color:var(--text2);line-height:1.45;}
 .pl-note .sw{width:12px;height:12px;border-radius:3px;background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent);flex-shrink:0;margin-top:1px;}
@@ -364,6 +369,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:14px;}
 .toggle-row .lbl{color:var(--text);font-size:13.5px;font-weight:600;}
 .toggle-row .note{margin-top:2px;}
+.note .warn{color:var(--amber-text);}
 .mt10{margin-top:10px;}
 .confirm-body{padding:6px 22px 4px;font-size:13px;color:var(--text2);line-height:1.5;}
 .toast{position:fixed;left:50%;bottom:26px;z-index:80;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;background:var(--text);color:var(--bg);font-size:13px;font-weight:550;box-shadow:var(--shadow-pop);animation:toast .22s ease-out;white-space:nowrap;}
@@ -536,7 +542,8 @@ function curSymbol(code){
   } catch(e){ return code; }
 }
 function perHour(){ return curSymbol()+'/'+t('h_unit'); }
-function monthName(mo){ return cap(fmt('d:month',{month:'long'}).format(new Date(2024,mo,1))); }
+function monthTitle(mo, y){ return /^(zh|ja)/.test(LANG) ? '<span>'+y+'年</span> '+monthName(mo) : monthName(mo)+' <span>'+y+'</span>'; }
+function monthName(mo){ return LANG==='zh' ? (mo+1)+'月' : cap(fmt('d:month',{month:'long'}).format(new Date(2024,mo,1))); }
 function dayNames(){ return [1,2,3,4,5,6,7].map(d=>cap(fmt('d:wd',{weekday:'short'}).format(new Date(2024,0,d)).replace('.',''))); }
 function shortDate(date){ return fmt('d:short',{day:'numeric',month:'short'}).format(date); }
 function longDate(date){ return cap(fmt('d:long',{weekday:'long',day:'numeric',month:'long'}).format(date)); }
@@ -544,9 +551,9 @@ function periodLabel(from,to){ return fmt('d:range',{day:'numeric',month:'long'}
 function periodShort(from,to){ return fmt('d:rangeS',{day:'numeric',month:'short'}).formatRange(from, to); }
 function relDays(n){ return fmt('r:day',{numeric:'auto'}).format(n,'day'); }
 function hrsFmt(h){
-  const hh=Math.floor(Math.abs(h)), mm=Math.round((Math.abs(h)-hh)*60);
-  if(!hh&&!mm) return '0 '+t('m_unit');
-  return hh ? (hh+' '+t('h_unit')+(mm?' '+mm+' '+t('m_unit'):'')) : (mm+' '+t('m_unit'));
+  const hh=Math.floor(Math.abs(h)), mm=Math.round((Math.abs(h)-hh)*60), sp=t('u_sep');
+  if(!hh&&!mm) return '0'+sp+t('m_unit');
+  return hh ? (hh+sp+t('h_unit')+(mm?' '+mm+sp+t('m_unit'):'')) : (mm+sp+t('m_unit'));
 }
 
 function setLang(l){
@@ -754,8 +761,21 @@ function computeHoursStatusFor(y,mo){
 function canEditMonth(){ return !isPastMonth(Y,Mo) || !!workEditUnlocked[mKey(Y,Mo)]; }
 
 /* ══════════════ SCHEDULE SUGGESTION ══════════════ */
-function generateScheduleSuggestion(y, mo, shiftsTarget, patternType, blocked){
-  blocked = blocked || new Set();
+/* Short days are working days by definition, so they're always in the schedule:
+   one the pattern missed takes the place of the nearest suggested day. */
+function generateScheduleSuggestion(y, mo, shiftsTarget, patternType, blocked, required){
+  required = required || new Set();
+  const days = new Set(patternSuggestion(y, mo, shiftsTarget, patternType, blocked || new Set(), required));
+  required.forEach(r=>{
+    if (days.has(r)) return;
+    let near = null;
+    days.forEach(dd=>{ if (!required.has(dd) && (near===null || Math.abs(dd-r)<Math.abs(near-r))) near = dd; });
+    if (near===null) return;
+    days.delete(near); days.add(r);
+  });
+  return [...days].sort((a,b)=>a-b);
+}
+function patternSuggestion(y, mo, shiftsTarget, patternType, blocked, required){
   const d = dim(y,mo);
   shiftsTarget = Math.min(Number(shiftsTarget)||0, d);
   if (shiftsTarget<=0) return [];
@@ -781,6 +801,7 @@ function generateScheduleSuggestion(y, mo, shiftsTarget, patternType, blocked){
     const days = buildForPhase(phase);
     if (days.length<shiftsTarget) continue;
     let score=0;
+    required.forEach(r=>{ if (days.includes(r)) score+=100; });
     for(let dd=1; dd<=d; dd++){
       const wd=new Date(y,mo,dd).getDay();
       if ((wd===0||wd===6) && !days.includes(dd)) score++;
@@ -918,7 +939,7 @@ function renderTopbar(){
   const monthly = (TAB==='work' || TAB==='planner') && LOAD==='ok';
   const width = TAB==='settings' ? 640 : TAB==='about' ? 760 : 1060;
   document.getElementById('topbar').innerHTML = '<div class="topbar-inner" style="max-width:'+width+'px">'+(monthly
-    ? '<button class="title title-btn" onclick="toggleMonthPicker(this)" title="'+esc(t('pick_month'))+'">'+monthName(Mo)+' <span>'+Y+'</span><i class="chev">'+ICONS.updown+'</i></button>'+
+    ? '<button class="title title-btn" onclick="toggleMonthPicker(this)" title="'+esc(t('pick_month'))+'">'+monthTitle(Mo, Y)+'<i class="chev">'+ICONS.updown+'</i></button>'+
       '<div class="month-nav">'+
         (isCurrentMonth() ? '' : '<button class="btn btn-secondary btn-sm" onclick="goToday()">'+t('to_current')+'</button>')+
         '<button class="icon-btn" onclick="prevMo()" title="'+esc(t('prev'))+'">'+ICONS.left+'</button>'+
@@ -1047,7 +1068,8 @@ function renderWork(){
     if (pm!==undefined) tips.push(t('tip_payday', money(pm)));
     return '<div class="'+cls+'"'+(canEdit?' onclick="openDay('+n+')"':'')+' title="'+esc(tips.join(' · '))+'">'+
       '<span class="n">'+n+'</span>'+(marks?'<span class="mks">'+marks+'</span>':'')+
-      (time?'<span class="h num">'+cellTime(time)+'</span>':'')+'</div>';
+      (time ? '<span class="h num">'+cellTime(time)+'</span>'
+        : adj ? (adj.type==='holiday' ? '<span class="h off">'+t('type_holiday')+'</span>' : '<span class="h sh num">−'+hrsFmt(Number(adj.hours)||0)+'</span>') : '')+'</div>';
   }).join('');
   const lockbar = isPast ? (canEdit
       ? '<div class="lockbar open">'+ICONS.unlock+t('lock_open')+'<button class="btn btn-sm btn-secondary" onclick="toggleWorkEdit()">'+t('lock')+'</button></div>'
@@ -1110,26 +1132,27 @@ function renderDaySheet(){
   const dd = dayDraft, k = mKey(Y,Mo);
   const perShift = Number((workSettings[k]||{}).hoursPerShift)||0;
   const seg = ['regular','holiday','short'].map(tp=>'<button class="'+(dd.type===tp?'on':'')+'" onclick="setDayType(\''+tp+'\')">'+t('type_'+tp)+'</button>').join('');
-  const typeNote = dd.type==='holiday' ? '<div class="note">'+t('de_hol_note')+'</div>'
-    : dd.type==='short' ? '<div class="note">'+t('de_short_note')+'</div>'+
+  const typeNote = dd.type==='short' ? '<div class="note">'+t('de_short_note')+'</div>'+
       '<div class="affix mt10"><input id="dd-short" class="input num" type="number" min="0" step="0.5" placeholder="'+esc(t('de_short_ph'))+'" value="'+esc(dd.short)+'" oninput="dayDraft.short=this.value"><em>'+t('h_unit')+'</em></div>'
     : '';
-  return '<div class="sheet" role="dialog" aria-modal="true">'+
-    '<div class="sheet-head"><div><div class="sheet-title">'+longDate(new Date(Y,Mo,dd.n))+'</div>'+
-      '<div class="sheet-sub num">'+t('de_usual', resolvedHoursForDay(Y,Mo,dd.n))+'</div></div>'+
-      '<button class="icon-btn" onclick="closeModal()" title="'+esc(t('btn_close'))+'">'+ICONS.close+'</button></div>'+
-    '<div class="sheet-body">'+
+  /* A day off has no shift, so there's no time or extra rate to enter. */
+  const body = dd.type==='holiday'
+    ? '<div class="note">'+t('de_hol_note')+(dd.time || dd.extra ? ' <span class="warn">'+t('de_hol_drop')+'</span>' : '')+'</div>'
+    : typeNote+'<div class="sep"></div>'+
       '<div class="lbl-row"><span class="lbl">'+t('de_time')+'</span>'+(dd.time?'<button class="btn-link" onclick="clearDayTime()">'+t('de_clear')+'</button>':'')+'</div>'+
       '<input id="dd-time" class="time-big" type="text" inputmode="numeric" placeholder="00:00:00" autocomplete="off" value="'+esc(dd.time)+'" oninput="onTimeInput(this)">'+
       '<div class="form-err" id="dd-err">'+esc(dd.err)+'</div>'+
       (perShift>0 ? '<div class="quick"><button class="chip" onclick="fillShift('+perShift+')">'+ICONS.clock+t('de_fill', hrsFmt(perShift))+'</button></div>' : '')+
       '<div class="sep"></div>'+
-      '<div class="lbl-row"><span class="lbl">'+t('de_type')+'</span></div>'+
-      '<div class="seg">'+seg+'</div>'+typeNote+
-      '<div class="sep"></div>'+
       '<div class="toggle-row"><div><div class="lbl">'+t('de_extra')+'</div><div class="note">'+t('de_extra_note')+'</div></div>'+
         '<button class="switch'+(dd.extra?' on':'')+'" role="switch" aria-checked="'+dd.extra+'" onclick="toggleExtra()"></button></div>'+
-      (dd.extra ? '<div class="affix mt10"><input id="dd-rate" class="input num" type="number" min="0" placeholder="'+esc(t('de_rate_ph'))+'" value="'+esc(dd.rate)+'" oninput="dayDraft.rate=this.value"><em>'+perHour()+'</em></div>' : '')+
+      (dd.extra ? '<div class="affix mt10"><input id="dd-rate" class="input num" type="number" min="0" placeholder="'+esc(t('de_rate_ph'))+'" value="'+esc(dd.rate)+'" oninput="dayDraft.rate=this.value"><em>'+perHour()+'</em></div>' : '');
+  return '<div class="sheet" role="dialog" aria-modal="true">'+
+    '<div class="sheet-head"><div><div class="sheet-title">'+longDate(new Date(Y,Mo,dd.n))+'</div>'+
+      '<div class="sheet-sub num">'+t('de_usual', resolvedHoursForDay(Y,Mo,dd.n))+'</div></div>'+
+      '<button class="icon-btn" onclick="closeModal()" title="'+esc(t('btn_close'))+'">'+ICONS.close+'</button></div>'+
+    '<div class="sheet-body">'+
+      '<div class="seg">'+seg+'</div>'+body+
     '</div>'+
     '<div class="sheet-foot"><button class="btn btn-secondary" onclick="closeModal()">'+t('btn_cancel')+'</button>'+
       '<button class="btn btn-primary" onclick="saveDay()">'+t('btn_save')+'</button></div>'+
@@ -1137,7 +1160,7 @@ function renderDaySheet(){
 }
 function setDayType(tp){
   dayDraft.type = tp; dayDraft.err = ''; renderModal();
-  if (tp==='short'){ const el=document.getElementById('dd-short'); if (el) el.focus(); }
+  const el = document.getElementById(tp==='short' ? 'dd-short' : 'dd-time'); if (el) el.focus();
 }
 function toggleExtra(){
   dayDraft.extra = !dayDraft.extra; dayDraft.err = ''; renderModal();
@@ -1172,6 +1195,7 @@ function normalizeTime(s){
 function dayError(msg){ dayDraft.err = msg; const e=document.getElementById('dd-err'); if (e) e.textContent = msg; }
 function saveDay(){
   const dd = dayDraft, k = wKey(dd.n);
+  if (dd.type==='holiday'){ dd.time=''; dd.extra=false; }
   const time = normalizeTime(dd.time);
   if (time===null) return dayError(t('err_format'));
   if (time){ const [,mm,ss]=time.split(':').map(Number); if (mm>=60||ss>=60) return dayError(t('err_minsec')); }
@@ -1225,9 +1249,14 @@ function renderPlanner(){
   const ws = workSettings[k] || {};
   const perShift = Number(ws.hoursPerShift)||0;
   const schedType = (ws.scheduleType==='custom' ? 'flex' : ws.scheduleType) || '5/2';
-  const blocked = new Set();
-  for (let dd=1; dd<=d; dd++){ const adj=holidayAdj[keyFor(Y,Mo,dd)]; if (adj && adj.type==='holiday') blocked.add(dd); }
-  const suggested = new Set(generateScheduleSuggestion(Y, Mo, ws.shifts, schedType, blocked));
+  const blocked = new Set(), short = {};
+  for (let dd=1; dd<=d; dd++){
+    const adj=holidayAdj[keyFor(Y,Mo,dd)];
+    if (adj && adj.type==='holiday') blocked.add(dd);
+    else if (adj) short[dd] = Number(adj.hours)||0;
+  }
+  const suggested = new Set(generateScheduleSuggestion(Y, Mo, ws.shifts, schedType, blocked, new Set(Object.keys(short).map(Number))));
+  const plannedH = [...suggested].reduce((sum,n)=>sum+Math.max(0, perShift-(short[n]||0)), 0);
 
   const pats = [['5/2','5/2','pat_52'],['2/2','2/2','pat_22'],['7/0','7/0','pat_70'],['flex',t('flex'),'pat_flex']];
   const patterns = '<div class="patterns">'+pats.map(p=>'<button class="pattern'+(schedType===p[0]?' on':'')+'" onclick="setScheduleType(\''+p[0]+'\')"><b>'+p[1]+'</b><small>'+t(p[2])+'</small></button>').join('')+'</div>';
@@ -1243,11 +1272,11 @@ function renderPlanner(){
       if (!n) return '<div class="day empty"></div>';
       const hol = blocked.has(n);
       const cls = ['day', isTodayCell(n)?'today':'', suggested.has(n)&&!hol?'sug':'', hol?'hol':'', i%7===6?'sun':''].filter(Boolean).join(' ');
-      const tip = hol ? t('tip_holiday') : resolvedHoursForDay(Y,Mo,n);
-      return '<div class="'+cls+'" title="'+esc(tip)+'"><span class="n">'+n+'</span>'+(workData[wKey(n)]?'<span class="wd"></span>':'')+'</div>';
+      const tip = hol ? t('tip_holiday') : resolvedHoursForDay(Y,Mo,n)+(n in short ? ' · '+t('tip_short', hrsFmt(short[n])) : '');
+      return '<div class="'+cls+'" title="'+esc(tip)+'"><span class="n">'+n+'</span>'+(n in short?'<span class="sd"></span>':'')+(workData[wKey(n)]?'<span class="wd"></span>':'')+'</div>';
     }).join('');
     body = '<div class="pl-stats"><div><b class="num">'+suggested.size+'</b>'+t('f_shifts')+'</div>'+
-      (perShift>0 ? '<div><b class="num">'+hrsFmt(suggested.size*perShift)+'</b>'+t('pl_hours_total')+'</div>' : '')+'</div>'+
+      (perShift>0 ? '<div><b class="num">'+hrsFmt(plannedH)+'</b>'+t('pl_hours_total')+'</div>' : '')+'</div>'+
       '<div class="cal-head">'+head+'</div><div class="cal compact">'+grid+'</div>'+
       '<div class="pl-note"><span class="sw"></span><span>'+t('pl_note')+'</span></div>';
   }
@@ -1267,7 +1296,7 @@ function renderPlanner(){
         '<button class="'+(breakDay==='weekday'?'on':'')+'" onclick="setBreakDay(\'weekday\')">'+t('weekdays')+'</button>'+
         '<button class="'+(breakDay==='weekend'?'on':'')+'" onclick="setBreakDay(\'weekend\')">'+t('weekends')+'</button></div>'+
       '<div class="bp">'+rows.map(r=>'<div class="bp-row'+(r.type==='break'?' brk':'')+'"><b class="num">'+r.from+' – '+r.to+'</b><span>'+
-        (r.type==='break' ? t('break_w')+' · '+r.mins+' '+t('m_unit') : t('work_w'))+'</span></div>').join('')+'</div>'+
+        (r.type==='break' ? t('break_w')+' · '+hrsFmt(r.mins/60) : t('work_w'))+'</span></div>').join('')+'</div>'+
       '<div class="note" style="margin-top:12px">'+t('breaks_note')+'</div>';
   } else breaks = '<div class="note" style="margin-top:0">'+t('pl_breaks_need')+'</div>';
   const breaksCard = '<div class="card"><div class="card-title">'+t('pl_breaks')+'</div>'+breaks+'</div>';

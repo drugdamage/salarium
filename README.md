@@ -3,10 +3,10 @@
 Log the hours you worked, see how much you'll get paid.
 
 Any pay schedule: payouts on your own dates (from once to 31 times a
-month) or every N days (daily, weekly, every two weeks). A monthly goal, a
-shift planner with breaks, and a read-only lock on past months.
-Light and dark mode, six languages (English, German, Spanish, French,
-Russian, Ukrainian), any currency.
+month) or every N days (daily, weekly, every two weeks). A monthly goal,
+days off and short days, a shift planner with breaks, and a read-only lock
+on past months. Light and dark mode, seven languages (Russian, English,
+Spanish, German, French, Chinese, Japanese), any currency.
 
 ![Salarium](screenshots/work-tab.png)
 
