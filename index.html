@@ -632,7 +632,9 @@ function flagHtml(code){ return '<span class="flag">'+(FLAGS[code]||'')+'</span>
      period but the last ends on a set day; the last one runs to the end of the
      month. Each period is paid on a day of the same or the next month.
    - 'cycle': every N days counted from a start date (daily, weekly, every two
-     weeks…), paid a set number of days after the period ends. */
+     weeks…), paid a set number of days after the period ends.
+   With `shift` on (the default), a payday on a Saturday or Sunday moves to
+   the Friday before. */
 const PAY_LAST_END = 30, CYCLE_MAX = 60;
 const PAY_COLORS = ['var(--accent)','var(--green)','var(--purple)','var(--amber)'];
 const PAY_TILES = ['#0a84ff','#34c759','#af52de','#ff9500'];
@@ -640,7 +642,7 @@ const PAY_TILES = ['#0a84ff','#34c759','#af52de','#ff9500'];
 function payFor(end){ const day = end+9; return day<=31 ? {day, month:0} : {day:day-30, month:1}; }
 function defaultPay(){
   return { mode:'dates', periods:[Object.assign({end:15}, payFor(15)), payFor(PAY_LAST_END)],
-    cycle:{len:7, start:'2024-01-01', delay:5} };
+    cycle:{len:7, start:'2024-01-01', delay:5}, shift:true };
 }
 function cleanPeriods(ps){
   if (!Array.isArray(ps) || !ps.length || ps.length>31) return null;
@@ -672,11 +674,13 @@ function cleanPay(v){
   if (v.first && v.second) v = {periods:[{end:15, day:v.first, month:0}, {day:v.second, month:1}]}; /* format before 2.2 */
   return { mode: v.mode==='cycle' ? 'cycle' : 'dates',
     periods: cleanPeriods(v.periods) || def.periods,
-    cycle: cleanCycle(v.cycle) || def.cycle };
+    cycle: cleanCycle(v.cycle) || def.cycle,
+    shift: v.shift!==false };
 }
 function addDays(date, n){ return new Date(date.getFullYear(), date.getMonth(), date.getDate()+n); }
 function dayDiff(a, b){ return Math.round((a-b)/86400000); }
 function parseDay(str){ const [y,m,d] = str.split('-').map(Number); return new Date(y, m-1, d); }
+function payDate(date){ const wd = date.getDay(); return PAY.shift && (wd===6 || wd===0) ? addDays(date, wd===6 ? -1 : -2) : date; }
 /* Pay periods that overlap month y/mo, as {i, from, to, pay} dates (+ p, the period setting, in 'dates' mode). */
 function payoutsFor(y, mo){
   const first = new Date(y,mo,1), d = dim(y,mo), out = [];
@@ -685,7 +689,7 @@ function payoutsFor(y, mo){
     const k0 = Math.floor(dayDiff(first,a)/c.len), k1 = Math.floor(dayDiff(new Date(y,mo,d),a)/c.len);
     for (let k=k0; k<=k1; k++){
       const from = addDays(a, k*c.len), to = addDays(from, c.len-1);
-      out.push({i:k-k0, from, to, pay:addDays(to, c.delay)});
+      out.push({i:k-k0, from, to, pay:payDate(addDays(to, c.delay))});
     }
     return out;
   }
@@ -694,16 +698,17 @@ function payoutsFor(y, mo){
     const end = i===PAY.periods.length-1 ? d : Math.min(p.end, d);
     if (start<=end){
       const pm = new Date(y, mo+p.month, 1), py = pm.getFullYear(), pmo = pm.getMonth();
-      out.push({i, p, from:new Date(y,mo,start), to:new Date(y,mo,end), pay:new Date(py, pmo, Math.min(p.day, dim(py,pmo)))});
+      out.push({i, p, from:new Date(y,mo,start), to:new Date(y,mo,end), pay:payDate(new Date(py, pmo, Math.min(p.day, dim(py,pmo))))});
     }
     start = Math.max(start, end+1);
   });
   return out;
 }
-/* Payouts whose payday falls in month y/mo (they can come from earlier months). */
+/* Payouts whose payday falls in month y/mo (they can come from earlier months,
+   or from the next one when a weekend payday on the 1st moves back). */
 function paydaysIn(y, mo){
   const seen = {}, out = [];
-  [-2,-1,0].forEach(off=>{
+  [-2,-1,0,1].forEach(off=>{
     const m = new Date(y, mo+off, 1);
     payoutsFor(m.getFullYear(), m.getMonth()).forEach(r=>{
       if (r.pay.getFullYear()!==y || r.pay.getMonth()!==mo || seen[r.from.getTime()]) return;
@@ -1384,6 +1389,7 @@ function setCycle(f, v){
   c[f] = n; saveLater('payDays', 500);
 }
 function setCycleLen(n){ PAY.cycle.len = n; save('payDays'); render(); }
+function toggleShift(){ PAY.shift = !PAY.shift; save('payDays'); render(); }
 function ddTrigger(id, inner, small){
   return '<button class="dd-btn'+(small?' sm':'')+'" data-dd="'+id+'" onclick="toggleDD(\''+id+'\', this)" aria-haspopup="listbox">'+inner+'<span class="chev">'+ICONS.updown+'</span></button>';
 }
@@ -1507,6 +1513,8 @@ function renderSettings(){
       row('percent','#ff3b30', t('set_tax'), t('set_tax_note'),
         '<div class="affix"><input class="input num" type="number" min="0" max="99" step="any" value="'+esc(taxPct())+'" oninput="setTaxPct(this.value)"><em>%</em></div>')+
       row('cal','#30b350', t('set_pmode'), t('set_pmode_note'), modeSeg)+
+      row('cal','#ff9500', t('set_shift'), t('set_shift_note'),
+        '<button class="switch'+(PAY.shift?' on':'')+'" role="switch" aria-checked="'+PAY.shift+'" onclick="toggleShift()"></button>')+
     '</div>'+
     '<div class="group-title">'+t('set_payouts')+'</div><div class="group">'+payRows+'</div>'+
     '<div class="group-title">'+t('set_upcoming')+'</div><div class="group">'+upRows+'</div>'+
