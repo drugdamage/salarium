@@ -1,6 +1,6 @@
 {
   "name": "salarium",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Desktop app for logging work hours and calculating salary: monthly goal, any pay schedule, schedule planner. Data in your own Supabase.",
   "keywords": [
     "electron",
@@ -63,6 +63,8 @@
       "!screenshots",
       "!*.bat",
       "!*.command",
+      "!install.*",
+      "!.github",
       "!README.md",
       "!config.example.js",
       "!.gitignore"

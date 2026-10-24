@@ -36,6 +36,17 @@ ipcMain.on('app-info', (e) => {
   e.returnValue = { version: app.getVersion(), platform: process.platform };
 });
 
+// Supabase URL and key from the setup screen, kept in the app's data folder so
+// they survive updates.
+const configFile = () => path.join(app.getPath('userData'), 'config.json');
+ipcMain.on('config-get', (e) => {
+  try { e.returnValue = JSON.parse(fs.readFileSync(configFile(), 'utf8')); } catch { e.returnValue = null; }
+});
+ipcMain.handle('config-set', (_e, cfg) => {
+  fs.mkdirSync(path.dirname(configFile()), { recursive: true });
+  fs.writeFileSync(configFile(), JSON.stringify({ url: String(cfg.url), key: String(cfg.key) }, null, 2), 'utf8');
+});
+
 ipcMain.on('set-theme', (_e, mode) => {
   if (['system', 'light', 'dark'].includes(mode)) nativeTheme.themeSource = mode;
 });

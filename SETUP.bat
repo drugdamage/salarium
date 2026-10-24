@@ -13,15 +13,6 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-if not exist config.js (
-    echo.
-    echo ERROR: config.js not found.
-    echo Copy config.example.js to config.js and fill in your Supabase keys.
-    echo.
-    pause
-    exit /b 1
-)
-
 echo.
 echo [1/2] Installing dependencies...
 call npm install

@@ -11,31 +11,32 @@ Spanish, German, French, Chinese, Japanese), any currency.
 
 ![Salarium](screenshots/work-tab.png)
 
-## How to run it
+## Install
 
-### 1. Install Node.js
-
-Download the **LTS** version from [nodejs.org](https://nodejs.org) and
-install it (version 18 or newer). To check that it worked, open Terminal
-(macOS) or Command Prompt (Windows) and run:
+**macOS**
 
 ```sh
-node -v
+curl -fsSL https://raw.githubusercontent.com/drugdamage/salarium/main/install.sh | sh
 ```
 
-You should see something like `v22.x.x`.
+**Windows** (PowerShell)
 
-### 2. Download Salarium
-
-Either click **Code → Download ZIP** on this page and unzip it, or run:
-
-```sh
-git clone https://github.com/drugdamage/salarium.git
+```powershell
+irm https://raw.githubusercontent.com/drugdamage/salarium/main/install.ps1 | iex
 ```
 
-### 3. Create a free Supabase database
+The command installs the latest version and starts it; run it again to
+update. You can also download the zip from the
+[latest release](https://github.com/drugdamage/salarium/releases/latest).
 
-Your data is stored in your own free Supabase database.
+---
+
+## Connect your database
+
+Your data is stored in your own free Supabase database. On first launch
+Salarium asks for it and walks you through these steps.
+
+### 1. Create a Supabase project
 
 1. Go to [supabase.com](https://supabase.com) and sign in (GitHub login works).
 2. Click **New project**.
@@ -46,10 +47,10 @@ Your data is stored in your own free Supabase database.
 > If the Supabase site doesn't load or looks broken, turn off your ad
 > blocker (uBlock etc.) for supabase.com.
 
-### 4. Create the table
+### 2. Create the table
 
 1. In your project, open **SQL Editor** from the left sidebar (the `>_` icon).
-2. Paste this:
+2. Paste this (the app has a **Copy** button for it):
 
    ```sql
    create table if not exists kv_store (
@@ -63,59 +64,34 @@ Your data is stored in your own free Supabase database.
 
 3. Click **Run**. You should see `Success. No rows returned`.
 
-### 5. Connect the app to your database
+### 3. Paste your keys into Salarium
 
 1. In Supabase, click **Connect** at the top of the project page (or go to
    **Project Settings → API Keys**).
-2. Copy two things:
-   - **Project URL**, which looks like `https://abcdefghijkl.supabase.co`
-   - **publishable key**, which starts with `sb_publishable_` (on older
-     projects it's called the **anon** key)
-3. In the Salarium folder, make a copy of `config.example.js` and name it
-   `config.js`.
-4. Open `config.js` in any text editor and paste your values in place of the
-   placeholders:
+2. Copy the **Project URL** (`https://abcdefghijkl.supabase.co`) and the
+   **publishable key** (starts with `sb_publishable_`; on older projects
+   it's called the **anon** key).
+3. Paste both into Salarium and click **Connect**.
 
-   ```js
-   window.SALARIUM_CONFIG = {
-     SUPABASE_URL: 'https://abcdefghijkl.supabase.co',
-     SUPABASE_KEY: 'sb_publishable_...',
-   };
-   ```
+The key works like a password to your database, so don't share it. To
+switch to another project later, open **Settings → Database → Change**.
 
-The key works like a password to your database, so don't share
-`config.js` with anyone.
+Then open **Settings** to pick your language, currency, theme, hourly rate,
+tax and pay schedule.
 
-### 6. Start it
+---
 
-In Terminal / Command Prompt, go to the Salarium folder and run:
+## Run from source
 
-```sh
-npm install
-npm start
-```
+1. Install [Node.js](https://nodejs.org) 18 or newer.
+2. Clone this repository: `git clone https://github.com/drugdamage/salarium.git`
+3. In its folder, run `npm install`, then `npm start`.
 
-The first `npm install` takes a minute or two. After that, `npm start` is
-enough.
+To build the app yourself, double-click `SETUP.command` (macOS) or
+`SETUP.bat` (Windows); it ends up in `dist/`. Optionally, copy
+`config.example.js` to `config.js` with your keys to skip the setup screen.
 
-Open **Settings** to pick your language, currency, theme, hourly rate, tax
-and pay schedule.
-
-### 7. Optional: build a real app
-
-So you don't need the terminal every time:
-
-- **macOS:** double-click `SETUP.command`. The app appears in
-  `dist/mac-arm64/Salarium.app`. Drag it into Applications.
-- **Windows:** double-click `SETUP.bat`. The app appears in
-  `dist\win-unpacked\Salarium.exe`.
-
-If macOS says the app **is damaged** or **can't be opened**, that's because
-it isn't signed. Run this once in Terminal:
-
-```sh
-xattr -cr dist/mac-arm64/Salarium.app
-```
+---
 
 ## License
 

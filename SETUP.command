@@ -10,15 +10,6 @@ if ! command -v node >/dev/null 2>&1; then
   exit 1
 fi
 
-if [ ! -f config.js ]; then
-  echo ""
-  echo "ERROR: config.js not found."
-  echo "Copy config.example.js to config.js and fill in your Supabase keys."
-  echo ""
-  read -p "Press Enter to exit..."
-  exit 1
-fi
-
 echo ""
 echo "[1/2] Installing dependencies..."
 npm install

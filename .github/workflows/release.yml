@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    strategy:
+      matrix:
+        include:
+          - { name: macOS, os: macos-latest }
+          - { name: Windows, os: windows-latest }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Check version
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version $version in package.json"
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - name: Build macOS
+        if: runner.os == 'macOS'
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          set -euo pipefail
+          npx electron-builder --mac dir --arm64 --x64 --publish never
+          mkdir -p out
+          for pair in mac-arm64:arm64 mac:x64; do
+            app="dist/${pair%%:*}/Salarium.app"
+            test -d "$app" || { echo "::error::$app was not built"; exit 1; }
+            # Not notarized: an ad-hoc signature is enough to run once the quarantine flag is cleared.
+            codesign --force --deep --sign - "$app"
+            ditto -c -k --keepParent "$app" "out/Salarium-mac-${pair##*:}.zip"
+          done
+          ls -la out
+
+      - name: Build Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          npx electron-builder --win dir --x64 --publish never
+          if (-not (Test-Path dist/win-unpacked/Salarium.exe)) { Write-Error 'dist/win-unpacked/Salarium.exe was not built' }
+          New-Item -ItemType Directory out | Out-Null
+          Compress-Archive -Path dist/win-unpacked/* -DestinationPath out/Salarium-win-x64.zip
+          Get-ChildItem out
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: build-${{ matrix.name }}
+          path: out/*.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: out
+          merge-multiple: true
+
+      - name: Release notes from the tag message
+        run: |
+          set -euo pipefail
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > notes.md
+          cat >> notes.md <<'NOTES'
+
+          ---
+
+          **Install or update:** run the command from the [README](https://github.com/drugdamage/salarium#install), or unzip the file for your system. The macOS build is not notarized; the install command takes care of that.
+          NOTES
+          cat notes.md
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          (cd out && sha256sum *.zip > SHA256SUMS.txt)
+          ls -la out
+          gh release create "$GITHUB_REF_NAME" out/*.zip out/SHA256SUMS.txt \
+            --verify-tag \
+            --title "Salarium $GITHUB_REF_NAME" \
+            --notes-file notes.md
