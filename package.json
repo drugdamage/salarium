@@ -1,7 +1,7 @@
 {
   "name": "salarium",
   "version": "2.4.0",
-  "description": "Desktop app for logging work hours and calculating salary: monthly goal, any pay schedule, schedule planner. Data in your own Supabase.",
+  "description": "Desktop app for tracking work hours and earnings.",
   "keywords": [
     "electron",
     "desktop-app",

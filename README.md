@@ -1,13 +1,8 @@
 # Salarium
 
-Log the hours you worked, see how much you'll get paid.
+A desktop app for tracking work hours and earnings, built with Electron and Supabase.
 
-Any pay schedule: payouts on your own dates (from once to 31 times a
-month) or every N days (daily, weekly, every two weeks), with weekend
-paydays moved to the Friday before (can be turned off). A monthly goal,
-days off and short days, a shift planner with breaks, and a read-only lock
-on past months. Light and dark mode, seven languages (Russian, English,
-Spanish, German, French, Chinese, Japanese), any currency.
+Flexible pay schedules, monthly goals, shift planning, and tax estimates. Seven languages, custom currencies, and light/dark themes.
 
 ![Salarium](screenshots/work-tab.png)
 
@@ -28,8 +23,6 @@ irm https://raw.githubusercontent.com/drugdamage/salarium/main/install.ps1 | iex
 The command installs the latest version and starts it; run it again to
 update. You can also download the zip from the
 [latest release](https://github.com/drugdamage/salarium/releases/latest).
-
----
 
 ## Connect your database
 
@@ -79,8 +72,6 @@ switch to another project later, open **Settings → Database → Change**.
 Then open **Settings** to pick your language, currency, theme, hourly rate,
 tax and pay schedule.
 
----
-
 ## Run from source
 
 1. Install [Node.js](https://nodejs.org) 18 or newer.
@@ -90,8 +81,6 @@ tax and pay schedule.
 To build the app yourself, double-click `SETUP.command` (macOS) or
 `SETUP.bat` (Windows); it ends up in `dist/`. Optionally, copy
 `config.example.js` to `config.js` with your keys to skip the setup screen.
-
----
 
 ## License
 
