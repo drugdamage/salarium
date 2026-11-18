@@ -23,6 +23,7 @@ irm https://raw.githubusercontent.com/drugdamage/salarium/main/install.ps1 | iex
 The command installs the latest version and starts it; run it again to
 update. You can also download the zip from the
 [latest release](https://github.com/drugdamage/salarium/releases/latest).
+Check **About** in the app to see the installed version.
 
 ## Connect your database
 

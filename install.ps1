@@ -17,7 +17,7 @@ if (-not $asset) { throw 'No Windows build found in the latest release' }
 $tmp = Join-Path ([IO.Path]::GetTempPath()) ('salarium-' + [guid]::NewGuid())
 New-Item -ItemType Directory $tmp | Out-Null
 try {
-  Say "Downloading $($asset.name)"
+  Say "Downloading Salarium $($release.tag_name) ($($asset.name))"
   $zip = Join-Path $tmp 'salarium.zip'
   Invoke-WebRequest $asset.browser_download_url -OutFile $zip -UseBasicParsing
 
@@ -37,7 +37,7 @@ try {
     $lnk.Save()
   }
 
-  Say "Installed to $dest"
+  Say "Installed Salarium $($release.tag_name) to $dest"
   Start-Process $exe
 } finally {
   Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
