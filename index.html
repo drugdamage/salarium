@@ -252,6 +252,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .cal.compact .day.today .n{color:#fff;}
 .cal.compact .day.hol{background:var(--red-soft);}
 .cal.compact .day .sd{position:absolute;top:7px;right:8px;width:5px;height:5px;border-radius:50%;background:var(--amber);}
+.cal.compact .day .ed{position:absolute;top:7px;right:8px;width:5px;height:5px;border-radius:50%;background:var(--purple);}
 .cal.compact .day .wd{position:absolute;bottom:5px;left:50%;margin-left:-2px;width:4px;height:4px;border-radius:50%;background:var(--accent);}
 .pl-note{display:flex;gap:8px;align-items:flex-start;margin-top:14px;font-size:12px;color:var(--text2);line-height:1.45;}
 .pl-note .sw{width:12px;height:12px;border-radius:3px;background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent);flex-shrink:0;margin-top:1px;}
@@ -762,13 +763,14 @@ function holidayHourAdj(entry){
   return 0; /* holiday: non-working marker, does not reduce the hours goal */
 }
 function calcRange(from, to){
-  let h=0, gross=0;
+  let h=0, extraH=0, gross=0;
   for (let dt=from; dt<=to; dt=addDays(dt,1)){
     const k = keyFor(dt.getFullYear(), dt.getMonth(), dt.getDate()), hrs = parseTime(workData[k]);
     h += hrs;
+    if (overtimeRate[k]) extraH += hrs;
     gross += hrs*(overtimeRate[k] ? Number(overtimeRate[k]) : RATE);
   }
-  return {h, gross, net:gross*TAX};
+  return {h, extraH, gross, net:gross*TAX};
 }
 function computeHoursStatusFor(y,mo){
   const k = mKey(y,mo);
@@ -779,6 +781,8 @@ function computeHoursStatusFor(y,mo){
   let actual=0;
   for(let dd=1; dd<=d; dd++){
     const dk=keyFor(y,mo,dd);
+    /* Extra shifts are worked on top of the monthly goal. */
+    if (overtimeRate[dk]) continue;
     actual += parseTime(workData[dk]);
     if (holidayAdj[dk]) target += holidayHourAdj(holidayAdj[dk]);
   }
@@ -1055,6 +1059,7 @@ function renderWork(){
     '<div class="hero-label">'+t('hero_title')+' · '+monthName(Mo)+'</div>'+
     '<div class="hero-amount num">'+money(tot.net)+'</div>'+
     '<div class="hero-sub num">'+t('before_tax', money(tot.gross))+' · '+t('worked', hrsFmt(tot.h))+'</div>'+
+    (tot.extraH>0 ? '<div class="hero-sub num">'+t('extra_hours', hrsFmt(tot.extraH))+'</div>' : '')+
     progress+'</div>';
 
   const when = date => { const diff = daysTo(date); return diff<0 ? t('paid_on', shortDate(date)) : t('payout_in', diff<=30 ? relDays(diff) : shortDate(date)); };
@@ -1063,7 +1068,8 @@ function renderWork(){
     const p = r.calc;
     return '<div class="card payout"><div class="payout-head"><span class="dot" style="background:'+PAY_COLORS[r.i%4]+'"></span>'+(head ? head+' · ' : '')+periodLabel(r.from, r.to)+'</div>'+
       '<div class="payout-amount num'+(p.net===0?' zero':'')+'">'+money(p.net)+'</div>'+
-      '<div class="payout-meta num">'+(p.h>0 ? hrsFmt(p.h)+' · '+t('before_tax', money(p.gross)) : t('no_hours'))+'</div>'+
+      '<div class="payout-meta num">'+(p.h>0 ? hrsFmt(p.h)+' · '+t('before_tax', money(p.gross)) : t('no_hours'))+
+        (p.extraH>0 ? '<div>'+t('extra_hours', hrsFmt(p.extraH))+'</div>' : '')+'</div>'+
       '<span class="chip'+whenCls(r.pay)+'">'+(daysTo(r.pay)<0 ? ICONS.check : '')+when(r.pay)+'</span></div>';
   };
   /* Up to two payouts get their own cards; with more, the next one gets a card and all of them go in a list. */
@@ -1071,7 +1077,8 @@ function renderWork(){
   const cards = many ? payout(next || pays[pays.length-1], t(next ? 'po_next' : 'po_last')) : pays.map(r=>payout(r)).join('');
   const payList = many ? '<div class="card"><div class="card-title">'+t('po_list')+'<span class="count num">'+pays.length+'</span></div><div class="po-list">'+
     pays.map(r=>'<div class="po-row"><span class="dot" style="background:'+PAY_COLORS[r.i%4]+'"></span>'+
-      '<div class="po-main"><div class="po-range">'+periodShort(r.from, r.to)+'</div><div class="po-meta num">'+(r.calc.h>0 ? hrsFmt(r.calc.h) : t('no_hours'))+'</div></div>'+
+      '<div class="po-main"><div class="po-range">'+periodShort(r.from, r.to)+'</div><div class="po-meta num">'+(r.calc.h>0 ? hrsFmt(r.calc.h) : t('no_hours'))+
+        (r.calc.extraH>0 ? '<div>'+t('extra_hours', hrsFmt(r.calc.extraH))+'</div>' : '')+'</div></div>'+
       '<div class="po-right"><b class="num'+(r.calc.net===0?' zero':'')+'">'+money(r.calc.net)+'</b><span class="po-when'+whenCls(r.pay)+'">'+when(r.pay)+'</span></div></div>').join('')+
     '</div></div>' : '';
   const payMarks = {};
@@ -1331,8 +1338,8 @@ function renderPlanner(){
   const schedType = (ws.scheduleType==='custom' ? 'flex' : ws.scheduleType) || '5/2';
   const blocked = new Set(), short = {};
   for (let dd=1; dd<=d; dd++){
-    const adj=holidayAdj[keyFor(Y,Mo,dd)];
-    if (adj && adj.type==='holiday') blocked.add(dd);
+    const dk=keyFor(Y,Mo,dd), adj=holidayAdj[dk];
+    if (overtimeRate[dk] || (adj && adj.type==='holiday')) blocked.add(dd);
     else if (adj) short[dd] = Number(adj.hours)||0;
   }
   const suggested = new Set(generateScheduleSuggestion(Y, Mo, ws.shifts, schedType, blocked, new Set(Object.keys(short).map(Number))));
@@ -1350,10 +1357,11 @@ function renderPlanner(){
     const head = dayNames().map((n,i)=>'<div'+(i===6?' class="sun"':'')+'>'+n+'</div>').join('');
     const grid = cells.map((n,i)=>{
       if (!n) return '<div class="day empty"></div>';
-      const hol = blocked.has(n);
+      const adj = holidayAdj[wKey(n)], ot = overtimeRate[wKey(n)];
+      const hol = adj && adj.type==='holiday';
       const cls = ['day', isTodayCell(n)?'today':'', suggested.has(n)&&!hol?'sug':'', hol?'hol':'', i%7===6?'sun':''].filter(Boolean).join(' ');
-      const tip = hol ? t('tip_holiday') : resolvedHoursForDay(Y,Mo,n)+(n in short ? ' · '+t('tip_short', hrsFmt(short[n])) : '');
-      return '<div class="'+cls+'" title="'+esc(tip)+'"><span class="n">'+n+'</span>'+(n in short?'<span class="sd"></span>':'')+(workData[wKey(n)]?'<span class="wd"></span>':'')+'</div>';
+      const tip = hol ? t('tip_holiday') : resolvedHoursForDay(Y,Mo,n)+(ot ? ' · '+t('tip_extra', moneyExact(Number(ot))+'/'+t('h_unit')) : n in short ? ' · '+t('tip_short', hrsFmt(short[n])) : '');
+      return '<div class="'+cls+'" title="'+esc(tip)+'"><span class="n">'+n+'</span>'+(ot?'<span class="ed"></span>':n in short?'<span class="sd"></span>':'')+(workData[wKey(n)]?'<span class="wd"></span>':'')+'</div>';
     }).join('');
     body = '<div class="pl-stats"><div><b class="num">'+suggested.size+'</b>'+t('f_shifts')+'</div>'+
       (perShift>0 ? '<div><b class="num">'+hrsFmt(plannedH)+'</b>'+t('pl_hours_total')+'</div>' : '')+'</div>'+

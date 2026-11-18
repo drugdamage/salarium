@@ -39,6 +39,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npm test
+
       - name: Build macOS
         if: runner.os == 'macOS'
         env:
